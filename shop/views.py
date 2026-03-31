@@ -263,17 +263,16 @@ def buy_product(request, product_id):
         )
 
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- ОБХОД DNS ЧЕРЕЗ IP ---")
+        print("--- ОТПРАВКА НА ПРЯМОЙ IP BREVO ---")
         
-        # IP адрес ://brevo.com (один из актуальных)
-        # Мы используем http, так как сертификат SSL выдан на домен, а не на IP
+        # Полный и точный IP сервера Brevo
         direct_url = "http://185.107.232"
         
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
             "api-key": config('BREVO_API_KEY').strip(),
-            "Host": "://brevo.com" # ВАЖНО: говорим серверу, что мы идем к Brevo
+            "Host": "://brevo.com" # Это заставляет сервер Brevo принять наш запрос
         }
         
         payload = {
@@ -284,16 +283,16 @@ def buy_product(request, product_id):
         }
 
         try:
-            # Отправляем БЕЗ прокси и напрямую на IP
+            # Отключаем прокси и используем прямую отправку
             response = requests.post(
                 direct_url, 
                 headers=headers, 
                 json=payload, 
-                timeout=15,
+                timeout=10,
                 proxies={"http": None, "https": None}
             )
             
-            print(f"--- СТАТУС ПОСЛЕ IP: {response.status_code} ---")
+            print(f"--- СТАТУС API: {response.status_code} ---")
             
             if response.status_code == 201:
                 print("--- УСПЕХ! ПИСЬМО УШЛО ---")
@@ -302,8 +301,12 @@ def buy_product(request, product_id):
                 item.delete()
                 messages.success(request, "Заказ принят!")
             else:
-                print(f"--- ТЕКСТ: {response.text} ---")
+                # Если здесь будет ошибка, Brevo напишет почему (например, не тот отправитель)
+                print(f"--- ОТВЕТ СЕРВЕРА: {response.text} ---")
+                messages.error(request, f"Ошибка: {response.status_code}")
+
         except Exception as e:
-            print(f"--- СБОЙ: {e} ---")
+            print(f"--- СБОЙ СЕТИ: {e} ---")
+            messages.error(request, "Ошибка соединения.")
 
         return redirect('cart')
