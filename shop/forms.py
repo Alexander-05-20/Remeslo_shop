@@ -48,3 +48,4 @@ class SignUpForm(UserCreationForm):
             profile.phone_number = self.cleaned_data['phone_number']
             profile.save()
         return user
+    

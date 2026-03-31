@@ -227,3 +227,4 @@ def buy_product(request, product_id):
             item.delete()
 
         return redirect('cart')
+    
