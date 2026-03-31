@@ -223,7 +223,7 @@ def product_detail(request, pk):
 @login_required
 def buy_product(request, product_id):
     if request.method == 'POST':
-        print("--- МЫ ВНУТРИ POST-ЗАПРОСА ---")
+        print("!!! ВЫЗОВ ФУНКЦИИ BUY_PRODUCT ПРОИЗОШЕЛ !!!")
         user = request.user
         product = get_object_or_404(Product, id=product_id)
         
