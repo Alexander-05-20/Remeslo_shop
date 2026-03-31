@@ -167,3 +167,5 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default = '' , cast=Csv())
 # TELEGRAM_BOT
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_ADMIN_IDS', default='',cast=Csv())
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
