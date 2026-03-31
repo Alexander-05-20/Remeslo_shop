@@ -93,33 +93,28 @@ def cart_view(request):
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    
-    # Получаем количество из формы (обязательно с обработкой ошибок)
-    try:
-        quantity = int(request.POST.get('quantity', 1))
-    except (ValueError, TypeError):
-        quantity = 1
+    # Ищем этот товар в корзине пользователя
+    item = CartItem.objects.filter(user=request.user, product=product).first()
 
-    if product.stock >= quantity:
-        item, created = CartItem.objects.get_or_create(user=request.user, product=product)
-        
-        if not created:
-            item.quantity += quantity
+    if item and item.quantity > 0:
+        # 1. УМЕНЬШАЕМ количество в корзине
+        if item.quantity > 1:
+            item.quantity -= 1
+            item.save()
         else:
-            item.quantity = quantity
-        item.save()
+            item.delete()  # Если была 1 штука, удаляем строку из корзины
 
-        # Уменьшаем остаток на складе
-        product.stock -= quantity
-        product.save()
-        
-        # Сообщение об успехе (опционально)
-        messages.success(request, f"Товар '{product.name}' добавлен в корзину.")
+        # 2. УМЕНЬШАЕМ количество на складе (товар продан/списан)
+        if product.stock > 0:
+            product.stock -= 1
+            product.save()
+            messages.success(request, f"Вы купили 1 шт. '{product.name}'.")
+        else:
+            messages.error(request, "Товар закончился на складе.")
     else:
-        # ВОТ ЗДЕСЬ добавляем сообщение об ошибке
-        messages.error(request, f"Недостаточно товара '{product.name}' на складе (доступно: {product.stock}).")
+        messages.warning(request, "Этого товара нет в вашей корзине.")
 
-    return redirect(request.META.get('HTTP_REFERER', 'home'))
+    return redirect(request.META.get('HTTP_REFERER', 'cart'))
 
 # Очищает корзину.
 @login_required
