@@ -9,15 +9,16 @@
 <table border="1" cellpadding="10" cellspacing="0" style="width:100%; max-width:900px;">
     <tr>
         <th>Товар</th>
-        <th>Количество</th>
-        <th>Цена за шт.</th>
+        <th>В корзине</th>
+        <th>Остаток в магазине</th>
         <th>Итого</th>
         <th style="text-align:center;">Действия</th>
     </tr>
     {% for item in items %}
     <tr>
         <td>{{ item.product.name }}</td>
-        <td>{{ item.quantity }}</td>
+        <td><strong>{{ item.quantity }}</strong></td> 
+        <td style="color: blue;">{{ item.product.stock }}</td>
         <td>{{ item.product.price }} ₽</td>
         <td>{{ item.product.price|mul:item.quantity }} ₽</td>
         <td>

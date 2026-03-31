@@ -125,11 +125,22 @@ def add_to_cart(request, product_id):
 @login_required
 def clear_cart(request):
     if request.method == 'POST':
-        CartItem.objects.filter(user=request.user).delete()
-        # Можно также обновить счетчик или вернуть сообщение
-        total_items = 0
-        return JsonResponse({'success': True, 'total_items': total_items})
+        # 1. Получаем все товары в корзине пользователя
+        cart_items = CartItem.objects.filter(user=request.user)
+        
+        # 2. Возвращаем каждый товар на склад
+        for item in cart_items:
+            product = item.product
+            product.stock += item.quantity  # Прибавляем столько, сколько было в корзине
+            product.save()
+        
+        # 3. Теперь удаляем записи из корзины
+        cart_items.delete()
+        
+        return JsonResponse({'success': True, 'total_items': 0})
+    
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+
 
 # Декоратор, проверяющий вход для AJAX-запросов.
 # Если пользователь не залогинен — возвращает ошибку через JSON.
