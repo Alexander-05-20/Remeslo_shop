@@ -271,7 +271,7 @@ def buy_product(request, product_id):
                 'Новый заказ из магазина',
                 message,
                 settings.EMAIL_HOST_USER,
-                ['craftremeslo@gmail.com'],
+                ['craftremeslo@gmail.com',settings.EMAIL_HOST_USER],
                 fail_silently=False,
             )
             
