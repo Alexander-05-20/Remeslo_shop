@@ -272,8 +272,9 @@ def buy_product(request, product_id):
                 'Новый заказ из магазина',
                 message,
                 settings.EMAIL_HOST_USER,
-                ['craftremeslo@gmail.com',settings.EMAIL_HOST_USER],
-                fail_silently=False,
+                ['craftremeslo@gmail.com'],
+                fail_silently=True,
+                timeout=10,
             )
             print(f"--- РЕЗУЛЬТАТ ОТПРАВКИ: {res} ---")
             
