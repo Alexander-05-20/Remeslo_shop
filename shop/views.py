@@ -15,7 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 import socket
-
+import requests
 
 
 # Загружает все товары (Product.objects.all()) и показывает их на главной странице.
@@ -228,38 +228,31 @@ def buy_product(request, product_id):
         user = request.user
         product = get_object_or_404(Product, id=product_id)
         
-        # 1. Безопасное получение числа из формы
         try:
             requested_quantity = int(request.POST.get('quantity', 1))
         except (ValueError, TypeError):
             requested_quantity = 1
         
-        # Получаем товар из корзины
         item = CartItem.objects.filter(user=user, product=product).first()
         if not item:
             return redirect('cart')
         
         current_quantity = item.quantity
-        
-        # Ограничение: нельзя купить больше, чем есть в корзине
         if requested_quantity > current_quantity:
             requested_quantity = current_quantity
 
-        # 2. ПРОВЕРКА СКЛАДА (Важно! Чтобы не продать то, чего нет)
         if product.stock < requested_quantity:
             messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
             return redirect('cart')
 
-        # Получение телефона (через request.POST, если нет профиля)
         phone_number = request.POST.get('phone', 'Не указан') 
-        # Если у вас есть модель Profile, оставьте ваш блок try/except ниже:
         try:
             phone_number = user.profile.phone_number
         except:
             pass
 
-        # Формируем письмо
-        message = (
+        # Формируем текст письма
+        message_text = (
             f"Заказ от: {user.username}\n"
             f"Email клиента: {user.email}\n"
             f"Номер телефона: {phone_number}\n"
@@ -267,36 +260,50 @@ def buy_product(request, product_id):
             f"Количество: {requested_quantity}\n"
             f"Сумма: {product.price * requested_quantity} ₽"
         )
-        print(f"--- ПОПЫТКА ОТПРАВКИ НА {settings.EMAIL_HOST_USER} ---")
+
+        # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
+        print("--- ОТПРАВКА ЧЕРЕЗ API ---")
+        
+        # Данные для запроса
+        url = "https://brevo.com"
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "api-key": config('BREVO_API_KEY')  # Ваш ключ из раздела API Keys в Brevo
+        }
+        payload = {
+            "sender": {"name": "My Shop", "email": config('EMAIL_HOST_USER')}, # Почта-отправитель
+            "to": [{"email": "craftremeslo@gmail.com"}], # Ваша почта
+            "subject": "Новый заказ из магазина",
+            "textContent": message_text
+        }
+
         try:
-            # Устанавливаем лимит ожидания для сети, чтобы не было WORKER TIMEOUT
-            socket.setdefaulttimeout(15) 
+            # Делаем обычный HTTP-запрос (Railway это не блокирует)
+            response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=10)
             
-            res = send_mail(
-                'Новый заказ из магазина',
-                message,
-                settings.EMAIL_HOST_USER,
-                ['craftremeslo@gmail.com'],
-                fail_silently=False, # Ставим False, чтобы видеть реальную ошибку в логах
-            )
-            print(f"--- РЕЗУЛЬТАТ ОТПРАВКИ: {res} ---")
-            
-            # 3. УМЕНЬШАЕМ СКЛАД ПОСЛЕ УСПЕШНОЙ ОТПРАВКИ
-            product.stock -= requested_quantity
-            product.save()
+            # Статус 201 означает, что письмо успешно принято сервером Brevo
+            if response.status_code == 201:
+                print("--- УСПЕХ: Письмо отправлено через API ---")
+                
+                # 3. УМЕНЬШАЕМ СКЛАД И ОБНОВЛЯЕМ КОРЗИНУ
+                product.stock -= requested_quantity
+                product.save()
 
-            # Обновляем или удаляем товар из корзины
-            new_quantity = current_quantity - requested_quantity
-            if new_quantity > 0:
-                item.quantity = new_quantity
-                item.save()
+                new_quantity = current_quantity - requested_quantity
+                if new_quantity > 0:
+                    item.quantity = new_quantity
+                    item.save()
+                else:
+                    item.delete()
+
+                messages.success(request, "Заказ отправлен! Мы свяжемся с вами.")
             else:
-                item.delete()
+                print(f"--- ОШИБКА BREVO: {response.text} ---")
+                messages.error(request, "Ошибка сервиса отправки.")
 
-            messages.success(request, "Заказ отправлен! Мы свяжемся с вами.")
-            
         except Exception as e:
-            # messages.error(request, f"Ошибка при отправке почты: {e}")
-            # messages.error(request, f"Ошибка: {type(e).__name__} - {str(e)}")
-            print(f"--- ОШИБКА: {e} ---")
+            print(f"--- СЕТЕВАЯ ОШИБКА API: {e} ---")
+            messages.error(request, "Не удалось отправить заказ из-за сетевой ошибки.")
+
         return redirect('cart')
