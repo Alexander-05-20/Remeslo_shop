@@ -93,10 +93,23 @@ def cart_view(request):
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    item, created = CartItem.objects.get_or_create(user=request.user, product=product)
-    if not created:
-        item.quantity += 1
-        item.save()
+    
+    # 1. Проверяем, есть ли товар в наличии на складе
+    if product.stock > 0:
+        item, created = CartItem.objects.get_or_create(user=request.user, product=product)
+        
+        # 2. Если товар уже был в корзине, просто увеличиваем его кол-во ТАМ
+        if not created:
+            item.quantity += 1
+            item.save()
+            
+        # 3. УМЕНЬШАЕМ количество на складе самого товара
+        product.stock -= 1
+        product.save()
+    else:
+        # Можно добавить уведомление, что товар закончился
+        pass
+
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 # Очищает корзину.
