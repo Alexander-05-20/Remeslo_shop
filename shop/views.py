@@ -93,28 +93,35 @@ def cart_view(request):
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    # Ищем этот товар в корзине пользователя
-    item = CartItem.objects.filter(user=request.user, product=product).first()
+    
+    # 1. Сначала определяем, сколько штук добавляем
+    try:
+        requested_quantity = int(request.POST.get('quantity', 1))
+    except (ValueError, TypeError):
+        requested_quantity = 1
 
-    if item and item.quantity > 0:
-        # 1. УМЕНЬШАЕМ количество в корзине
-        if item.quantity > 1:
-            item.quantity -= 1
-            item.save()
+    # 2. Проверяем, есть ли столько на складе
+    if product.stock >= requested_quantity:
+        # Ищем товар в корзине или создаем новую запись
+        item, created = CartItem.objects.get_or_create(user=request.user, product=product)
+        
+        if not created:
+            item.quantity += requested_quantity
         else:
-            item.delete()  # Если была 1 штука, удаляем строку из корзины
+            item.quantity = requested_quantity
+        item.save()
 
-        # 2. УМЕНЬШАЕМ количество на складе (товар продан/списан)
-        if product.stock >= requested_quantity:
-            product.stock -= requested_quantity
-            product.save()
-        else:
-            messages.error(request, f"На складе осталось только {product.stock} шт.")
-            return redirect('cart')
+        # 3. УМЕНЬШАЕМ склад (бронируем товар)
+        product.stock -= requested_quantity
+        product.save()
+        
+        messages.success(request, f"Добавлено в корзину: {requested_quantity} шт.")
     else:
-        messages.warning(request, "Этого товара нет в вашей корзине.")
+        messages.error(request, f"На складе всего {product.stock} шт.")
 
+    # Возвращаемся туда, откуда пришли (каталог или корзина)
     return redirect(request.META.get('HTTP_REFERER', 'cart'))
+
 
 # Очищает корзину.
 @login_required
