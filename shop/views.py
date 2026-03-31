@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, CartItem
 from django.contrib.auth.decorators import login_required
@@ -13,7 +14,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.conf import settings
+
 
 
 # Загружает все товары (Product.objects.all()) и показывает их на главной странице.
@@ -269,7 +270,7 @@ def buy_product(request, product_id):
             send_mail(
                 'Новый заказ из магазина',
                 message,
-                settings.EMAIL_HOST_USER, # Всегда используйте settings
+                settings.EMAIL_HOST_USER,
                 ['craftremeslo@gmail.com'],
                 fail_silently=False,
             )
@@ -289,6 +290,7 @@ def buy_product(request, product_id):
             messages.success(request, "Заказ отправлен! Мы свяжемся с вами.")
             
         except Exception as e:
-            messages.error(request, f"Ошибка при отправке почты: {e}")
+            # messages.error(request, f"Ошибка при отправке почты: {e}")
+            messages.error(request, f"Ошибка: {type(e).__name__} - {str(e)}")
 
         return redirect('cart')
