@@ -73,27 +73,27 @@ WSGI_APPLICATION = 'remeslo_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT', default='5432'),
-        'CONN_MAX_AGE': 600,  # Кэширование соединений
-        'OPTIONS': {
-            'sslmode': 'require',  # Обязательно для Railway
-        },
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('DATABASE_NAME'),
+#         'USER': config('DATABASE_USER'),
+#         'PASSWORD': config('DATABASE_PASSWORD'),
+#         'HOST': config('DATABASE_HOST'),
+#         'PORT': config('DATABASE_PORT', default='5432'),
+#         'CONN_MAX_AGE': 600,  # Кэширование соединений
+#         'OPTIONS': {
+#             'sslmode': 'require',  # Обязательно для Railway
+#         },
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 
 # Password validation
@@ -166,8 +166,8 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default = '' , cast=Csv())
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Использовать SMTP
-EMAIL_HOST = '://gmail.com'                                   # SMTP сервер Gmail
+EMAIL_HOST = 'smtp.gmail.com'                                   # SMTP сервер Gmail
 EMAIL_PORT = 587                                                # Порт TLS
 EMAIL_USE_TLS = True                                            # Включить TLS (шифрование)
 EMAIL_HOST_USER = 'craftremeslo@gmail.com'                         # Ваш email (отправитель)
-EMAIL_HOST_PASSWORD = 'fbkq dswu bkdq qeww' 
+EMAIL_HOST_PASSWORD = 'czbv wxhk qikx hayu' 
