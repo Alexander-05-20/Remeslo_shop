@@ -263,32 +263,25 @@ def buy_product(request, product_id):
         )
 
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- ОТПРАВКА НА ПРЯМОЙ IP BREVO ---")
+        print("--- СТАРТ ПРЯМОЙ ОТПРАВКИ ---")
         
-        # Полный и точный IP сервера Brevo
-        direct_url = "http://185.107.232"
-        
-        headers = {
-            "accept": "application/json",
-            "content-type": "application/json",
-            "api-key": config('BREVO_API_KEY').strip(),
-            "Host": "://brevo.com" # Это заставляет сервер Brevo принять наш запрос
-        }
-        
-        payload = {
-            "sender": {"name": "Shop", "email": config('EMAIL_HOST_USER').strip()},
-            "to": [{"email": "craftremeslo@gmail.com"}],
-            "subject": "Новый заказ",
-            "textContent": message_text
-        }
-
         try:
-            # Отключаем прокси и используем прямую отправку
+            # Отправляем запрос, указывая ПОЛНЫЙ IP вручную
             response = requests.post(
-                direct_url, 
-                headers=headers, 
-                json=payload, 
-                timeout=10,
+                "http://185.107.232", # IP Brevo полностью
+                headers={
+                    "accept": "application/json",
+                    "content-type": "application/json",
+                    "api-key": config('BREVO_API_KEY').strip(),
+                    "Host": "://brevo.com"
+                },
+                json={
+                    "sender": {"name": "Shop", "email": config('EMAIL_HOST_USER').strip()},
+                    "to": [{"email": "craftremeslo@gmail.com"}],
+                    "subject": "Новый заказ",
+                    "textContent": message_text
+                },
+                timeout=15,
                 proxies={"http": None, "https": None}
             )
             
@@ -301,12 +294,11 @@ def buy_product(request, product_id):
                 item.delete()
                 messages.success(request, "Заказ принят!")
             else:
-                # Если здесь будет ошибка, Brevo напишет почему (например, не тот отправитель)
                 print(f"--- ОТВЕТ СЕРВЕРА: {response.text} ---")
-                messages.error(request, f"Ошибка: {response.status_code}")
+                messages.error(request, "Ошибка сервиса.")
 
         except Exception as e:
-            print(f"--- СБОЙ СЕТИ: {e} ---")
-            messages.error(request, "Ошибка соединения.")
-
+            # Если здесь опять будет обрезанный IP в логах - это магия Railway
+            print(f"--- ОШИБКА В ЛОГЕ: {e} ---")
+            messages.error(request, "Ошибка сети.")
         return redirect('cart')
