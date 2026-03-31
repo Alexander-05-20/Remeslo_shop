@@ -13,5 +13,6 @@ urlpatterns = [
     path('about/', views.about, name='about'),  # Страница о нас 
     path('signup/', views.signup, name='signup'), # Страница регистрации нового пользователя
     path('login/', views.login_view, name='login'), # Страница входа в аккаунт
+    path('buy/<int:product_id>/', views.buy_product, name='buy_product'),
 
 ]
