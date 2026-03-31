@@ -94,21 +94,30 @@ def cart_view(request):
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
-    # 1. Проверяем, есть ли товар в наличии на складе
-    if product.stock > 0:
+    # Получаем количество из формы (обязательно с обработкой ошибок)
+    try:
+        quantity = int(request.POST.get('quantity', 1))
+    except (ValueError, TypeError):
+        quantity = 1
+
+    if product.stock >= quantity:
         item, created = CartItem.objects.get_or_create(user=request.user, product=product)
         
-        # 2. Если товар уже был в корзине, просто увеличиваем его кол-во ТАМ
         if not created:
-            item.quantity += 1
-            item.save()
-            
-        # 3. УМЕНЬШАЕМ количество на складе самого товара
-        product.stock -= 1
+            item.quantity += quantity
+        else:
+            item.quantity = quantity
+        item.save()
+
+        # Уменьшаем остаток на складе
+        product.stock -= quantity
         product.save()
+        
+        # Сообщение об успехе (опционально)
+        messages.success(request, f"Товар '{product.name}' добавлен в корзину.")
     else:
-        # Можно добавить уведомление, что товар закончился
-        pass
+        # ВОТ ЗДЕСЬ добавляем сообщение об ошибке
+        messages.error(request, f"Недостаточно товара '{product.name}' на складе (доступно: {product.stock}).")
 
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 

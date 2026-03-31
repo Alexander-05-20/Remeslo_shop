@@ -8,6 +8,7 @@ class Product(models.Model):
     available = models.BooleanField(default=True, verbose_name='В наличии')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    stock = models.PositiveIntegerField(default=0, verbose_name='Остаток на складе')
 
     def __str__(self):
         return self.name
