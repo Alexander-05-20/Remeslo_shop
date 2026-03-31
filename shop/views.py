@@ -265,24 +265,31 @@ def buy_product(request, product_id):
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
         print("--- ОТПРАВКА ЧЕРЕЗ API ---")
         
-        # Данные для запроса
+        # 1. ИСПРАВЛЕННЫЙ URL (обязательно такой!)
         url = "https://brevo.com"
+        
+        # 2. ОЧИСТКА КЛЮЧА ОТ ПРОБЕЛОВ
+        api_key = config('BREVO_API_KEY').strip()
+        
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "api-key": config('BREVO_API_KEY')  # Ваш ключ из раздела API Keys в Brevo
+            "api-key": api_key
         }
+        
         payload = {
-            "sender": {"name": "My Shop", "email": config('EMAIL_HOST_USER')}, # Почта-отправитель
-            "to": [{"email": "craftremeslo@gmail.com"}], # Ваша почта
+            # Здесь тоже лучше добавить .strip() для надежности
+            "sender": {"name": "My Shop", "email": config('EMAIL_HOST_USER').strip()}, 
+            "to": [{"email": "craftremeslo@gmail.com"}],
             "subject": "Новый заказ из магазина",
             "textContent": message_text
         }
 
         try:
-            # Делаем обычный HTTP-запрос (Railway это не блокирует)
-            response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=10)
+            # Используем json=payload (это автоматически сделает json.dumps и добавит заголовки)
+            response = requests.post(url, headers=headers, json=payload, timeout=10)
             
+            print(f"--- СТАТУС API: {response.status_code} ---")
             # Статус 201 означает, что письмо успешно принято сервером Brevo
             if response.status_code == 201:
                 print("--- УСПЕХ: Письмо отправлено через API ---")
