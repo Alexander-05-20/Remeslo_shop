@@ -165,10 +165,9 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default = '' , cast=Csv())
 
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Использовать SMTP
-EMAIL_HOST = 'smtp.gmail.com'                                   # SMTP сервер Gmail
-EMAIL_PORT = 587                                                # Порт TLS
-EMAIL_USE_TLS = True                                            # Включить TLS (шифрование)
-EMAIL_HOST_USER = 'craftremeslo@gmail.com' 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER                        
-EMAIL_HOST_PASSWORD = 'czbv wxhk qikx hayu' 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='://gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
