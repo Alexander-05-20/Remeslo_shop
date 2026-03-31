@@ -88,6 +88,13 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -155,6 +162,7 @@ SESSION_COOKIE_NAME = 'sessionid'
 
 # Доверенные источники для CSRF
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default = '' , cast=Csv())
+
 # TELEGRAM_BOT
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_ADMIN_IDS', default='',cast=Csv())
