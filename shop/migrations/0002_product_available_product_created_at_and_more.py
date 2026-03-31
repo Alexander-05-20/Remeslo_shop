@@ -13,7 +13,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='product',
-            name='available',
             field=models.BooleanField(default=True, verbose_name='В наличии'),
         ),
         migrations.AddField(
