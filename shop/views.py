@@ -223,6 +223,7 @@ def product_detail(request, pk):
 @login_required
 def buy_product(request, product_id):
     if request.method == 'POST':
+        print("--- МЫ ВНУТРИ POST-ЗАПРОСА ---")
         user = request.user
         product = get_object_or_404(Product, id=product_id)
         
@@ -265,15 +266,16 @@ def buy_product(request, product_id):
             f"Количество: {requested_quantity}\n"
             f"Сумма: {product.price * requested_quantity} ₽"
         )
-
+        print(f"--- ПОПЫТКА ОТПРАВКИ НА {settings.EMAIL_HOST_USER} ---")
         try:
-            send_mail(
+            res = send_mail(
                 'Новый заказ из магазина',
                 message,
                 settings.EMAIL_HOST_USER,
                 ['craftremeslo@gmail.com',settings.EMAIL_HOST_USER],
                 fail_silently=False,
             )
+            print(f"--- РЕЗУЛЬТАТ ОТПРАВКИ: {res} ---")
             
             # 3. УМЕНЬШАЕМ СКЛАД ПОСЛЕ УСПЕШНОЙ ОТПРАВКИ
             product.stock -= requested_quantity
@@ -291,6 +293,6 @@ def buy_product(request, product_id):
             
         except Exception as e:
             # messages.error(request, f"Ошибка при отправке почты: {e}")
-            messages.error(request, f"Ошибка: {type(e).__name__} - {str(e)}")
-
+            # messages.error(request, f"Ошибка: {type(e).__name__} - {str(e)}")
+            print(f"--- ОШИБКА: {e} ---")
         return redirect('cart')
