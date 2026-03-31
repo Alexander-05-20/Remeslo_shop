@@ -263,42 +263,41 @@ def buy_product(request, product_id):
         )
 
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- СТАРТ ПРЯМОЙ ОТПРАВКИ ---")
+        print("--- ОТПРАВКА ЧЕРЕЗ АЛЬТЕРНАТИВНЫЙ API ---")
         
         try:
-            # Отправляем запрос, указывая ПОЛНЫЙ IP вручную
+            # Используем альтернативный домен, который не конфликтует с Vercel
             response = requests.post(
-                "http://185.107.232", # IP Brevo полностью
+                "https://sendinblue.com", 
                 headers={
                     "accept": "application/json",
                     "content-type": "application/json",
-                    "api-key": config('BREVO_API_KEY').strip(),
-                    "Host": "://brevo.com"
+                    "api-key": config('BREVO_API_KEY').strip()
                 },
                 json={
-                    "sender": {"name": "Shop", "email": config('EMAIL_HOST_USER').strip()},
+                    "sender": {"name": "Craft Shop", "email": config('EMAIL_HOST_USER').strip()},
                     "to": [{"email": "craftremeslo@gmail.com"}],
                     "subject": "Новый заказ",
                     "textContent": message_text
                 },
                 timeout=15,
+                # Принудительно отключаем прокси Railway
                 proxies={"http": None, "https": None}
             )
             
             print(f"--- СТАТУС API: {response.status_code} ---")
             
             if response.status_code == 201:
-                print("--- УСПЕХ! ПИСЬМО УШЛО ---")
+                print("--- УСПЕХ! ПИСЬМО УШЛО ЧЕРЕЗ SENDINBLUE ---")
                 product.stock -= requested_quantity
                 product.save()
                 item.delete()
-                messages.success(request, "Заказ принят!")
+                messages.success(request, "Заказ успешно отправлен!")
             else:
-                print(f"--- ОТВЕТ СЕРВЕРА: {response.text} ---")
+                print(f"--- ОТВЕТ СЕРВЕРА (ОШИБКА): {response.text} ---")
                 messages.error(request, "Ошибка сервиса.")
 
         except Exception as e:
-            # Если здесь опять будет обрезанный IP в логах - это магия Railway
-            print(f"--- ОШИБКА В ЛОГЕ: {e} ---")
-            messages.error(request, "Ошибка сети.")
+            print(f"--- КРИТИЧЕСКАЯ ОШИБКА: {e} ---")
+            messages.error(request, "Ошибка соединения.")
         return redirect('cart')
