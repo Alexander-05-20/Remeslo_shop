@@ -286,32 +286,26 @@ def buy_product(request, product_id):
         }
 
         try:
-            # Используем json=payload (это автоматически сделает json.dumps и добавит заголовки)
-            response = requests.post(url, headers=headers, json=payload, timeout=10)
+            # Создаем новую сессию, чтобы сбросить кэш DNS
+            with requests.Session() as s:
+                response = s.post(url, headers=headers, json=payload, timeout=10)
             
-            print(f"--- СТАТУС API: {response.status_code} ---")
-            # Статус 201 означает, что письмо успешно принято сервером Brevo
+            print(f"--- РЕАЛЬНЫЙ СТАТУС: {response.status_code} ---")
+            
             if response.status_code == 201:
-                print("--- УСПЕХ: Письмо отправлено через API ---")
-                
-                # 3. УМЕНЬШАЕМ СКЛАД И ОБНОВЛЯЕМ КОРЗИНУ
+                print("--- ПОБЕДА! ПИСЬМО УШЛО ---")
                 product.stock -= requested_quantity
                 product.save()
-
-                new_quantity = current_quantity - requested_quantity
-                if new_quantity > 0:
-                    item.quantity = new_quantity
-                    item.save()
-                else:
-                    item.delete()
-
-                messages.success(request, "Заказ отправлен! Мы свяжемся с вами.")
+                item.delete()
+                messages.success(request, "Заказ отправлен!")
             else:
-                print(f"--- ОШИБКА BREVO: {response.text} ---")
-                messages.error(request, "Ошибка сервиса отправки.")
+                # Если здесь опять Vercel - значит в переменной BREVO_API_KEY 
+                # в Railway случайно сохранен какой-то мусор или ссылка
+                print(f"--- ТЕКСТ ОШИБКИ: {response.text} ---")
+                messages.error(request, "Ошибка сервиса.")
 
         except Exception as e:
-            print(f"--- СЕТЕВАЯ ОШИБКА API: {e} ---")
+            print(f"--- КРИТИЧЕСКАЯ ОШИБКА: {e} ---")
             messages.error(request, "Не удалось отправить заказ из-за сетевой ошибки.")
 
         return redirect('cart')
