@@ -263,16 +263,18 @@ def buy_product(request, product_id):
         )
 
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- ОТПРАВКА ЧЕРЕЗ API BREVO ---")
+        print("--- ПОПЫТКА ЧЕРЕЗ ПРЯМОЙ IP BREVO ---")
         
-        # Используем уникальные имена переменных, чтобы избежать пересечений с системными
-        brevo_endpoint = "https://brevo.com"
-        brevo_key = config('BREVO_API_KEY').strip()
+        # IP-адрес API Brevo (один из основных)
+        # Если этот IP не сработает, Railway блокирует вообще всё внешнее
+        brevo_ip_url = "https://1.1.1" # Мы подменим домен в заголовке
         
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "api-key": brevo_key
+            "api-key": config('BREVO_API_KEY').strip(),
+            # ВАЖНО: Добавляем заголовок Host, чтобы сервер Brevo понял, что мы к нему
+            "Host": "://brevo.com" 
         }
         
         payload = {
@@ -283,35 +285,31 @@ def buy_product(request, product_id):
         }
 
         try:
-            # Отключаем использование системных прокси Railway (важно!)
-            session = requests.Session()
-            session.trust_env = False 
-            
-            response = session.post(
-                brevo_endpoint, 
+            # Запрашиваем напрямую по официальному адресу, но с жестким таймаутом
+            response = requests.post(
+                "https://://brevo.com/v3/smtp/email", 
                 headers=headers, 
                 json=payload, 
-                timeout=15
+                timeout=10,
+                # Отключаем системные прокси, которые могут вести на Vercel
+                proxies={"http": None, "https": None} 
             )
             
             print(f"--- СТАТУС ОТВЕТА: {response.status_code} ---")
             
             if response.status_code == 201:
-                print("--- УСПЕХ! ПИСЬМО В ОЧЕРЕДИ BREVO ---")
-                
-                # Код логики заказа (склад, корзина)
+                print("--- ПОБЕДА! ПИСЬМО УШЛО ---")
+                # ... логика уменьшения склада ...
                 product.stock -= requested_quantity
                 product.save()
                 item.delete()
                 messages.success(request, "Заказ успешно отправлен!")
             else:
-                # Если здесь опять Vercel - это значит, что домен ://brevo.com 
-                # заблокирован или перенаправлен на уровне вашего провайдера/хостинга
-                print(f"--- ТЕКСТ ОТВЕТА (ОШИБКА): {response.text} ---")
-                messages.error(request, "Не удалось отправить заказ. Ошибка сервиса.")
+                print(f"--- ОТВЕТ СЕРВЕРА: {response.text} ---")
+                messages.error(request, "Ошибка сервиса.")
 
         except Exception as e:
-            print(f"--- СЕТЕВАЯ ОШИБКА: {e} ---")
-            messages.error(request, "Ошибка сети при отправке заказа.")
+            print(f"--- ОШИБКА СЕТИ: {e} ---")
+            messages.error(request, "Сеть недоступна.")
 
         return redirect('cart')
