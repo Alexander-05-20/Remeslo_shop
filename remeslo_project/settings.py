@@ -145,12 +145,7 @@ LOGOUT_REDIRECT_URL = '/'
 # Страница входа, если пользователь не авторизован
 LOGIN_URL = '/login/'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Использовать SMTP
-EMAIL_HOST = 'smtp.gmail.com'                                   # SMTP сервер Gmail
-EMAIL_PORT = 587                                                # Порт TLS
-EMAIL_USE_TLS = True                                            # Включить TLS (шифрование)
-EMAIL_HOST_USER = 'craftremeslo@gmail.com'                         # Ваш email (отправитель)
-EMAIL_HOST_PASSWORD = 'srle bgmu byjg vjfe'                         # Пароль или приложение пароль         
+                        # Пароль или приложение пароль         
 
 # Время жизни сессии 
 SESSION_COOKIE_AGE = 1209600 # 2 недели
@@ -168,4 +163,11 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default = '' , cast=Csv())
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_ADMIN_IDS', default='',cast=Csv())
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Использовать SMTP
+EMAIL_HOST = '://gmail.com'                                   # SMTP сервер Gmail
+EMAIL_PORT = 587                                                # Порт TLS
+EMAIL_USE_TLS = True                                            # Включить TLS (шифрование)
+EMAIL_HOST_USER = 'craftremeslo@gmail.com'                         # Ваш email (отправитель)
+EMAIL_HOST_PASSWORD = 'srle bgmu byjg vjfe' 
