@@ -94,33 +94,35 @@ def cart_view(request):
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
-    # 1. Сначала определяем, сколько штук добавляем
     try:
         requested_quantity = int(request.POST.get('quantity', 1))
     except (ValueError, TypeError):
         requested_quantity = 1
 
-    # 2. Проверяем, есть ли столько на складе
-    if product.stock >= requested_quantity:
-        # Ищем товар в корзине или создаем новую запись
-        item, created = CartItem.objects.get_or_create(user=request.user, product=product)
-        
-        if not created:
-            item.quantity += requested_quantity
+    # Ищем товар в корзине пользователя
+    item = CartItem.objects.filter(user=request.user, product=product).first()
+
+    if item and item.quantity >= requested_quantity:
+        # 1. УМЕНЬШАЕМ КОЛИЧЕСТВО В КОРЗИНЕ
+        if item.quantity > requested_quantity:
+            item.quantity -= requested_quantity
+            item.save()
         else:
-            item.quantity = requested_quantity
-        item.save()
+            item.delete() # Если купили всё, что было в корзине — удаляем запись
 
-        # 3. УМЕНЬШАЕМ склад (бронируем товар)
-        product.stock -= requested_quantity
-        product.save()
-        
-        messages.success(request, f"Добавлено в корзину: {requested_quantity} шт.")
+        # 2. УМЕНЬШАЕМ КОЛИЧЕСТВО НА СКЛАДЕ
+        # (Только если на складе физически есть товар)
+        if product.stock >= requested_quantity:
+            product.stock -= requested_quantity
+            product.save()
+            messages.success(request, f"Вы купили {requested_quantity} шт. '{product.name}'.")
+        else:
+            messages.error(request, "Ошибка: на складе недостаточно товара для списания.")
     else:
-        messages.error(request, f"На складе всего {product.stock} шт.")
+        messages.error(request, "В корзине нет такого количества товара.")
 
-    # Возвращаемся туда, откуда пришли (каталог или корзина)
-    return redirect(request.META.get('HTTP_REFERER', 'cart'))
+    return redirect('cart')
+
 
 
 # Очищает корзину.
@@ -184,11 +186,18 @@ def add_to_cart_ajax(request, product_id):
 def remove_one_from_cart(request, product_id):
     if request.method == 'POST':
         item = get_object_or_404(CartItem, user=request.user, product_id=product_id)
+        product = item.product # Берем сам товар
+
         if item.quantity > 1:
             item.quantity -= 1
             item.save()
         else:
             item.delete()
+
+        # ВОЗВРАЩАЕМ 1 ШТУКУ НА СКЛАД
+        product.stock += 1
+        product.save()
+        
     return redirect('cart')
 
 # Показывает список доступных товаров, где available=True.

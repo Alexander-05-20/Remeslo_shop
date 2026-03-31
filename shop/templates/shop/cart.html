@@ -25,7 +25,7 @@
     <!-- Контейнер для выравнивания по горизонтали -->
     <div style="display: flex; align-items: center; gap: 10px;">
         <!-- Область для покупки -->
-        <form method="post" action="{% url 'buy_product' item.product.id %}" style="display:flex; align-items:center;">
+        <form method="post" action="{% url 'add_to_cart' item.product.id %}" style="display:flex; align-items:center;">
             {% csrf_token %}
             <label for="quantity_{{ item.product.id }}" style="margin-right:5px;">Кол-во:</label>
             <input type="number" id="quantity_{{ item.product.id }}" name="quantity" value="1" min="1" max="{{ item.product.stock }}" style="width:60px; margin-right:10px;">
