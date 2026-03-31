@@ -263,18 +263,15 @@ def buy_product(request, product_id):
         )
 
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- ПОПЫТКА ЧЕРЕЗ ПРЯМОЙ IP BREVO ---")
+        print("--- ПОПЫТКА ОТПРАВКИ (БЕЗ ОШИБОК В URL) ---")
         
-        # IP-адрес API Brevo (один из основных)
-        # Если этот IP не сработает, Railway блокирует вообще всё внешнее
-        brevo_ip_url = "https://1.1.1" # Мы подменим домен в заголовке
+        # Строго прописываем адрес вручную, чтобы не было двойных https://
+        brevo_url = "https://brevo.com"
         
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "api-key": config('BREVO_API_KEY').strip(),
-            # ВАЖНО: Добавляем заголовок Host, чтобы сервер Brevo понял, что мы к нему
-            "Host": "://brevo.com" 
+            "api-key": config('BREVO_API_KEY').strip()
         }
         
         payload = {
@@ -285,31 +282,29 @@ def buy_product(request, product_id):
         }
 
         try:
-            # Запрашиваем напрямую по официальному адресу, но с жестким таймаутом
+            # Отправляем запрос, принудительно отключая прокси Railway
             response = requests.post(
-                "https://://brevo.com/v3/smtp/email", 
+                brevo_url, 
                 headers=headers, 
                 json=payload, 
                 timeout=10,
-                # Отключаем системные прокси, которые могут вести на Vercel
-                proxies={"http": None, "https": None} 
+                proxies={"http": None, "https": None}
             )
             
-            print(f"--- СТАТУС ОТВЕТА: {response.status_code} ---")
+            print(f"--- СТАТУС API: {response.status_code} ---")
             
             if response.status_code == 201:
-                print("--- ПОБЕДА! ПИСЬМО УШЛО ---")
-                # ... логика уменьшения склада ...
+                print("--- УСПЕХ! ПИСЬМО ОТПРАВЛЕНО ---")
                 product.stock -= requested_quantity
                 product.save()
                 item.delete()
                 messages.success(request, "Заказ успешно отправлен!")
             else:
-                print(f"--- ОТВЕТ СЕРВЕРА: {response.text} ---")
-                messages.error(request, "Ошибка сервиса.")
+                print(f"--- ОТВЕТ СЕРВЕРА (ОШИБКА): {response.text} ---")
+                messages.error(request, "Ошибка сервиса рассылки.")
 
         except Exception as e:
             print(f"--- ОШИБКА СЕТИ: {e} ---")
-            messages.error(request, "Сеть недоступна.")
+            messages.error(request, "Ошибка соединения.")
 
         return redirect('cart')
