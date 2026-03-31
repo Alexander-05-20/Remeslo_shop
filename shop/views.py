@@ -105,12 +105,12 @@ def add_to_cart(request, product_id):
             item.delete()  # Если была 1 штука, удаляем строку из корзины
 
         # 2. УМЕНЬШАЕМ количество на складе (товар продан/списан)
-        if product.stock > 0:
-            product.stock -= 1
+        if product.stock >= requested_quantity:
+            product.stock -= requested_quantity
             product.save()
-            messages.success(request, f"Вы купили 1 шт. '{product.name}'.")
         else:
-            messages.error(request, "Товар закончился на складе.")
+            messages.error(request, f"На складе осталось только {product.stock} шт.")
+            return redirect('cart')
     else:
         messages.warning(request, "Этого товара нет в вашей корзине.")
 
@@ -121,7 +121,7 @@ def add_to_cart(request, product_id):
 def clear_cart(request):
     if request.method == 'POST':
         # 1. Получаем все товары в корзине пользователя
-        cart_items = CartItem.objects.filter(user=request.user)
+        cart_items = CartItem.objects.filter(user=request.user).select_related('product')
         
         # 2. Возвращаем каждый товар на склад
         for item in cart_items:
@@ -207,52 +207,71 @@ def buy_product(request, product_id):
     if request.method == 'POST':
         user = request.user
         product = get_object_or_404(Product, id=product_id)
-        requested_quantity = int(request.POST.get('quantity', 1))
         
-        # Получаем текущий товар из корзины
+        # 1. Безопасное получение числа из формы
         try:
-            item = CartItem.objects.get(user=user, product=product)
-            current_quantity = item.quantity
-        except CartItem.DoesNotExist:
-            # Если товар не в корзине, ничего не делаем
+            requested_quantity = int(request.POST.get('quantity', 1))
+        except (ValueError, TypeError):
+            requested_quantity = 1
+        
+        # Получаем товар из корзины
+        item = CartItem.objects.filter(user=user, product=product).first()
+        if not item:
             return redirect('cart')
         
-        # Ограничение по количеству в корзине
+        current_quantity = item.quantity
+        
+        # Ограничение: нельзя купить больше, чем есть в корзине
         if requested_quantity > current_quantity:
-            requested_quantity = current_quantity  # покупаем максимально возможное
-        
-        # Получение номера телефона пользователя
+            requested_quantity = current_quantity
+
+        # 2. ПРОВЕРКА СКЛАДА (Важно! Чтобы не продать то, чего нет)
+        if product.stock < requested_quantity:
+            messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
+            return redirect('cart')
+
+        # Получение телефона (через request.POST, если нет профиля)
+        phone_number = request.POST.get('phone', 'Не указан') 
+        # Если у вас есть модель Profile, оставьте ваш блок try/except ниже:
         try:
-            profile = user.profile
-            phone_number = profile.phone_number
+            phone_number = user.profile.phone_number
         except:
-            phone_number = 'Не указан'
+            pass
 
-        # Формируем письмо с заказом
-        user_email = user.email
-        
-        message = f"Заказ от: {user.username}\n"
-        message += f"Email клиента: {user_email}\n"
-        message += f"Номер телефона: {phone_number}\n"
-        message += f"Товар: {product.name}\n"
-        message += f"Количество: {requested_quantity}\n"
-
-        send_mail(
-            'Новый заказ из магазина',
-            message,
-            'craftremeslo@gmail.com',          # от кого
-            ['craftremeslo@gmail.com'],        # кому
+        # Формируем письмо
+        message = (
+            f"Заказ от: {user.username}\n"
+            f"Email клиента: {user.email}\n"
+            f"Номер телефона: {phone_number}\n"
+            f"Товар: {product.name}\n"
+            f"Количество: {requested_quantity}\n"
+            f"Сумма: {product.price * requested_quantity} ₽"
         )
 
-        # Обновляем или удаляем товар из корзины
-        new_quantity = current_quantity - requested_quantity
-        if new_quantity > 0:
-            # Остаток остается
-            item.quantity = new_quantity
-            item.save()
-        else:
-            # Товар полностью куплен, удаляем из корзины
-            item.delete()
+        try:
+            send_mail(
+                'Новый заказ из магазина',
+                message,
+                settings.EMAIL_HOST_USER, # Всегда используйте settings
+                ['craftremeslo@gmail.com'],
+                fail_silently=False,
+            )
+            
+            # 3. УМЕНЬШАЕМ СКЛАД ПОСЛЕ УСПЕШНОЙ ОТПРАВКИ
+            product.stock -= requested_quantity
+            product.save()
+
+            # Обновляем или удаляем товар из корзины
+            new_quantity = current_quantity - requested_quantity
+            if new_quantity > 0:
+                item.quantity = new_quantity
+                item.save()
+            else:
+                item.delete()
+
+            messages.success(request, "Заказ отправлен! Мы свяжемся с вами.")
+            
+        except Exception as e:
+            messages.error(request, f"Ошибка при отправке почты: {e}")
 
         return redirect('cart')
-    
