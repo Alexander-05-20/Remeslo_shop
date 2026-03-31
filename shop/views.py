@@ -14,6 +14,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+import socket
 
 
 
@@ -268,13 +269,15 @@ def buy_product(request, product_id):
         )
         print(f"--- ПОПЫТКА ОТПРАВКИ НА {settings.EMAIL_HOST_USER} ---")
         try:
+            # Устанавливаем лимит ожидания для сети, чтобы не было WORKER TIMEOUT
+            socket.setdefaulttimeout(15) 
+            
             res = send_mail(
                 'Новый заказ из магазина',
                 message,
                 settings.EMAIL_HOST_USER,
                 ['craftremeslo@gmail.com'],
-                fail_silently=True,
-                timeout=10,
+                fail_silently=False, # Ставим False, чтобы видеть реальную ошибку в логах
             )
             print(f"--- РЕЗУЛЬТАТ ОТПРАВКИ: {res} ---")
             
