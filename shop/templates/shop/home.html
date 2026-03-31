@@ -127,6 +127,7 @@
 
 <script>
   // Инициализация Swiper
+document.addEventListener('DOMContentLoaded', () => {
   const swiper = new Swiper('.mySwiper', {
     loop: true,
     autoplay: { delay: 4000, disableOnInteraction: false },
@@ -135,6 +136,7 @@
     slidesPerView: 3,
     spaceBetween: 25,
   });
+});
 
   // Функция добавления нового товара в слайдер
   function addProductToSlider(product) {
