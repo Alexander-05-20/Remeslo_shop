@@ -1,0 +1,34 @@
+{% extends "shop/base.html" %}
+{% block title %}О нас{% endblock %}
+{% block content %}
+
+<h1 style="margin-top:50px;">О нас</h1>
+
+<!-- Описание -->
+<p>Мы — небольшая мастерская, которая создаёт изделия из натуральной кожи ручной работы. Натуральная кожа - прочный и долговечный материал. А изделия из натуральной кожи всегда подчеркнут Ваш статус и индивидуальность.</p>
+<ul>
+    <li>- Мы не гонимся за модой.</li>
+    <li>- Мы гарантируем качество и долговечность.</li>
+    <li>- 100% натуральная кожа.</li>
+    <li>- 100% ручная работа.</li>
+</ul>
+
+<p>Телефон: <a href="tel:+79121702087">+7 (912) 170-20-87</a>  Россия, Сыктывкар, улица Карла Маркса 119 | Ремесло</p>
+
+<!-- Фото с процессом работы -->
+<h2 style="margin:10px 0px 20px 0px">Процесс изготовления</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 30px;">
+  <img src="/media/work_process.jpg" alt="Процесс 1" style="width: 200px; height:300px; border-radius: 8px;">
+  <img src="/media/work_process_2.jpg" alt="Процесс 2" style="width: 200px; height:300px; border-radius: 8px;">
+  <img src="/media/work_process_3.jpg" alt="Процесс 3" style="width: 200px; height:300px; border-radius: 8px;">
+  <img src="/media/work_process_3.jpg" alt="Процесс 4" style="width: 200px; height:300px; border-radius: 8px;">
+</div>
+
+<!-- Видео с процессом -->
+<h2 style="margin:20px 0px 20px 0px">Видео процесса</h2>
+<video width="200" controls autoplay muted loop style="border-radius: 8px;">
+  <source src="/media/work_process_video.mp4" type="video/mp4">
+  Ваш браузер не поддерживает тег video.
+</video>
+
+{% endblock %}

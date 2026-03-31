@@ -1,0 +1,230 @@
+{% extends "shop/base.html" %}
+{% block title %}Ремесло — изделия из натуральной кожи{% endblock %}
+{% block content %}
+
+<!-- Подключаем Swiper CSS и JS -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+
+<style>
+  .swiper {
+    width: 950px; /* или желаемая ширина */
+    margin: 0 auto;
+  }
+  .swiper-slide {
+    width: 250px !important; /* фиксированная ширина */
+  }
+  section{
+    text-align: center; 
+    padding: 2em;
+  }
+  .top-p{
+    max-width: 600px; 
+    margin: 1em auto; 
+    font-size: 1.1em; 
+    line-height: 1.5;
+  }
+  .top-a{
+    display: inline-block; 
+    margin-top: 1.5em; 
+    padding: 0.75em 1.5em; 
+    background-color: #B87333;
+    color: white; 
+    text-decoration: none; 
+    font-weight: bold; 
+    border-radius: 5px;
+  }
+  .product-image {
+    position: relative;
+    display: inline-block; /* или блочный, для корректной ширины */
+  }
+  .main-img {
+    width: 100%;
+    transition: opacity 0.5s;
+    position: relative;
+    z-index: 1;
+  }
+  .hover-img {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 1s;
+    z-index: 2;
+  }
+  .product-image:hover .main-img {
+    opacity: 0;
+  }
+  .product-image:hover .hover-img {
+    opacity: 1;
+  }
+</style>
+
+<section>
+    <h1>Добро пожаловать в магазин «Ремесло»</h1>
+    <p class="top-p">
+        Мы создаём высококачественные изделия из натуральной кожи ручной работы:
+        кошельки, ремни, сумки, обложки и многое другое. Наши мастера вкладывают душу в каждое изделие,
+        чтобы вы получили уникальный аксессуар на долгие годы.
+    </p>
+
+    <a href="{% url 'products' %}" class="top-a">Перейти в каталог товаров</a>
+
+    <!-- Слайдер товаров -->
+<div class="swiper mySwiper" style="margin-top: 3em; padding-bottom: 2em; max-width: 800px; margin-left: auto; margin-right: auto;">
+  <div class="swiper-wrapper">
+    {% for product in products|slice:":6" %}
+    <div class="swiper-slide" style="height: 500px; border: 1px solid #ccc; padding: 1em; border-radius: 8px; width: 250px; box-shadow: 1px 1px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between;">
+      <h3 style="height: 15%; font-weight: 600; color: #432f25; margin-bottom: 0.5em;">{{ product.name }}</h3>
+
+      <div class="product-image">
+        {% if product.images.all|length >= 2 %}
+          <a href="{% url 'product_detail' product.id %}">
+          <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}" class="main-img">
+          </a>
+          <a href="{% url 'product_detail' product.id %}">
+          <img src="{{ product.images.all.1.image.url }}" alt="{{ product.name }}" class="hover-img">
+          </a>
+        {% elif product.images.all %}
+          <a href="{% url 'product_detail' product.id %}">
+          <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}">
+          </a>
+        {% else %}
+          <div style="color: #999;">Нет изображений</div>
+        {% endif %}
+</div>
+
+      <p style="font-weight: bold; color: #432f25; margin-bottom: 1em;">{{ product.price }} ₽</p>
+      <form action="{% url 'add_to_cart' product.id %}" method="post" style="margin-top: auto;">
+        {% csrf_token %}
+        <button type="submit" class="add-to-cart" data-product-id="{{ product.id }}" 
+          style="background-color: #B87333; color: white; border: none; padding: 0.5em 1em; border-radius: 4px; cursor: pointer;">
+          Добавить в корзину
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  <div id="message-container" style="height:40px;"></div>
+
+  <!-- Кнопки навигации -->
+  <div class="swiper-button-next"></div>
+  <div class="swiper-button-prev"></div>
+
+  <!-- Пагинация -->
+  <div class="swiper-pagination"></div>
+</div>
+    
+</section>
+
+
+
+
+
+<script>
+  // Инициализация Swiper
+  const swiper = new Swiper('.mySwiper', {
+    loop: true,
+    autoplay: { delay: 4000, disableOnInteraction: false },
+    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+    pagination: { el: '.swiper-pagination', clickable: true },
+    slidesPerView: 3,
+    spaceBetween: 25,
+  });
+
+  // Функция добавления нового товара в слайдер
+  function addProductToSlider(product) {
+    const wrapper = document.querySelector('.swiper-wrapper');
+
+    const slide = document.createElement('div');
+    slide.className = 'swiper-slide';
+    slide.style.cssText = 'height: 500px; border: 1px solid #ccc; padding: 1em; border-radius: 8px; width: 250px; box-shadow: 1px 1px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between;';
+
+    // Собираем HTML для слайда
+    slide.innerHTML = `
+      <h3 style="height: 15%; font-weight: 600; color: #432f25; margin-bottom: 0.5em;">${product.name}</h3>
+      <div class="product-image" style="position: relative; display: inline-block;">
+        <a href="${product.detail_url}">
+          <img src="${product.image_url}" alt="${product.name}" class="main-img" style="width: 100%;">
+        </a>
+        ${product.hover_image_url ? `<img src="${product.hover_image_url}" alt="${product.name}" class="hover-img" style="width: 100%; position: absolute; top: 0; left: 0; opacity:0;">` : ''}
+      </div>
+      <p style="font-weight: bold; color: #432f25; margin-bottom: 1em;">${product.price} ₽</p>
+      <form action="${product.cart_url}" method="post" style="margin-top: auto;">
+        <input type="hidden" name="csrfmiddlewaretoken" value="${product.csrf_token}">
+        <button type="submit" class="add-to-cart" style="background-color: #B87333; color: white; border: none; padding: 0.5em 1em; border-radius: 4px; cursor: pointer;">
+          Добавить в корзину
+        </button>
+      </form>
+    `;
+
+    wrapper.appendChild(slide);
+    swiper.update();
+
+    // Можно добавить плавное появление (опционально)
+    // slide.style.opacity = 0;
+    // setTimeout(() => { slide.style.opacity = 1; }, 50);
+  }
+
+  // Обработка формы добавления товара через AJAX
+  document.querySelectorAll('.add-to-cart-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const url = this.action;
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Создаем объект товара для вставки
+          const product = {
+            id: data.product.id,
+            name: data.product.name,
+            price: data.product.price,
+            image_url: data.product.image_url,
+            hover_image_url: data.product.hover_image_url, // если есть
+            detail_url: data.product.detail_url,
+            cart_url: data.product.cart_url,
+            csrf_token: getCookie('csrftoken')
+          };
+          addProductToSlider(product);
+        } else {
+          alert('Ошибка при добавлении в корзину');
+        }
+      })
+      .catch(() => {
+        alert('Ошибка сети');
+      });
+    });
+  });
+
+  // Вспомогательная функция для получения CSRF токена
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i=0; i<cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length +1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length+1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+{% endblock %}

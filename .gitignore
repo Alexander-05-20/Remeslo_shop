@@ -1,0 +1,32 @@
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Виртуальное окружение 
+venv/
+env/
+ENV/
+
+# База данных
+db.sqlite3
+*.sqlite3
+
+# Секретные файлы
+.env
+*.key
+*.pem
+
+# Статика и медиа
+staticfiles/
+media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи
+*.log

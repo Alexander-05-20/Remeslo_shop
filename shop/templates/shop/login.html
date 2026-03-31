@@ -1,0 +1,27 @@
+{% extends "shop/base.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+
+<h1 style="margin-top:50px;">Вход на сайт</h1>
+<form method="post">
+    {% csrf_token %}
+    <p>
+        <label for="id_username">Имя пользователя или Email:</label><br>
+        <input type="text" name="username" id="id_username" required>
+        {% for message in messages %}
+            <span style="color: red;">{{ message }}</span>
+        {% endfor %}
+
+    </p>
+    <p>
+        <label for="id_password">Пароль:</label><br>
+        <input type="password" name="password" id="id_password" required>
+        {% for message in messages %}
+            <span style="color: red;">{{ message }}</span>
+        {% endfor %}
+    </p>
+    <button type="submit">Войти</button>
+</form>
+
+<p>Нет аккаунта? <a href="{% url 'signup' %}">Зарегистрируйтесь</a></p>
+{% endblock %}

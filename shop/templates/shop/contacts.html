@@ -1,0 +1,47 @@
+{% extends "shop/base.html" %}
+{% block title %}Контакты{% endblock %}
+{% block content %}
+
+<style>
+    h1{
+        margin-top:50px;
+    }
+    ul{
+        list-style-type:none; 
+        padding-left: 0;
+    }
+    .vk{
+        display:inline-block; 
+        width:20px; 
+        height:20px; 
+        background:#4C75A3; 
+        color:white; 
+        font-weight:bold; 
+        font-family: Arial, sans-serif; 
+        font-size:9px; 
+        line-height:2.4; 
+        text-align:center; 
+        border-radius:5px;
+        text-decoration:none;"
+    }
+</style>
+
+<h1>Контакты</h1>
+<p>Ремесло — изделия из натуральной кожи ручной работы.</p>
+<ul>
+    <li>&#x2706; Телефон: <a href="tel:+79121702087">+7 (912) 170-20-87</a></li>
+    <li>&#x2709; Email: <a href="mailto:craftremeslo@gmail.com">craftremeslo@gmail.com</a></li>
+    <li>📍 Адрес: г. Сыктывкар, улица Карла Маркса д.119</li>
+</ul>
+
+<h2>Мы в социальных сетях</h2>
+<ul>
+    <li>
+        <a href="https://vk.com/yourprofile" target="_blank" rel="noopener" class="vk">VK</a>
+        <a href="https://vk.com/craft_remeslo" target="_blank" rel="noopener">ВКонтакте</a>
+    </li>
+    <li>&#x2708; <a href="https://t.me/yourtelegram" target="_blank" rel="noopener">Telegram</a>
+    </li>
+</ul>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "shop/base.html" %}
+{% block title %}Товары{% endblock %}
+
+{% block content %}
+<ul>
+{% for product in products %}
+    <li>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.description }}</p>
+        <p>Цена: {{ product.price }} ₽</p>
+
+        <div>
+            {% for image in product.images.all %}
+                <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}" style="max-width:150px; max-height:150px;">
+            {% empty %}
+                <p>Изображения отсутствуют</p>
+            {% endfor %}
+        </div>
+
+        <a href="{% url 'add_to_cart' product.id %}" >Добавить в корзину</a>
+    </li>
+{% empty %}
+    <li>Нет товаров в каталоге.</li>
+{% endfor %}
+</ul>
+{% endblock %}

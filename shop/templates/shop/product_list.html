@@ -1,0 +1,255 @@
+{% extends "shop/base.html" %}
+
+{% block title %}Товары{% endblock %}
+
+{% block content %}
+
+<style>
+h1 {
+    margin: 50px 0px 30px 90px;
+}
+.text-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+.product-list {
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.product-card {
+    width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+.product-card:hover {
+    overflow: hidden;
+    transform: translateY(0px);
+}
+.product-images {
+    margin-bottom: 10px;
+}
+
+/* Контейнер для изображений */
+.image-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+/* Обе картинки внутри контейнера */
+.image-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 5px;
+    transition: opacity 0.5s ease;
+    cursor: pointer;
+}
+
+/* Первая изображение */
+.first-image {
+    z-index: 1;
+    opacity: 1;
+}
+
+/* Вторая изображение */
+.second-image {
+    z-index: 2;
+    opacity: 0;
+}
+
+/* При наведении — показываем второе, скрываем первое */
+.image-container:hover .first-image {
+    opacity: 0;
+}
+.image-container:hover .second-image {
+    opacity: 1;
+}
+
+/* Остальные стили */
+.product-name {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+.product-name a {
+    color: #432f25;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.product-name a:hover {
+    color: #B87333;
+    text-decoration: underline;
+    text-decoration-color: #B87333;
+}
+.product-price {
+    font-weight: bold;
+    color: #432f25;
+    margin-bottom: 8px;
+}
+.product-description {
+    font-size: 0.9em;
+    color: #555;
+}
+.add-to-cart-btn {
+    background-color: #B87333;
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+img {
+    width: 100%;
+    border-radius: 5px;
+    object-fit: cover;
+    cursor: pointer;
+}
+.img-none {
+    width: 100%;
+    height: 200px;
+    background: #f0f0f0;
+    border-radius: 5px;
+}
+.add-to-cart-msg {
+    height: 20px;
+}
+</style>
+
+<h1>Список товаров</h1>
+
+<div class="product-list">
+  {% for product in products %}
+    <div class="product-card">
+
+      <div class="product-images">
+        {% with images=product.images.all|slice:":2" %}
+          {% if images|length > 0 %}
+            <div class="image-container">
+              <!-- Первое изображение -->
+              <a href="{% url 'product_detail' product.id %}">
+                <img class="first-image" src="{{ images.0.image.url }}" alt="{{ product.name }}">
+              </a>
+              {% if images|length > 1 %}
+                <!-- Второе изображение -->
+                <a href="{% url 'product_detail' product.id %}">
+                  <img class="second-image" src="{{ images.1.image.url }}" alt="{{ product.name }}">
+                </a>
+              {% else %}
+                <!-- Заглушка, если нет второго изображения -->
+                <div class="second-image" style="background:#f0f0f0; width:100%; height:200px; position:absolute; top:0; left:0;"></div>
+              {% endif %}
+            </div>
+          {% elif product.image %}
+            <a href="{% url 'product_detail' product.id %}">
+              <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            </a>
+          {% else %}
+            <div class="img-none"></div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <div class="product-name">
+        <a href="{% url 'product_detail' product.id %}">{{ product.name }}</a>
+      </div>
+      <div class="product-price">Цена: {{ product.price }} руб.</div>
+      <button class="add-to-cart-btn" data-product-id="{{ product.id }}">Добавить в корзину</button>
+      <span class="add-to-cart-msg" id="msg-{{ product.id }}"></span>
+
+    </div>
+  {% endfor %}
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const buttons = document.querySelectorAll('.add-to-cart-btn');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const productId = this.getAttribute('data-product-id');
+
+      fetch(`/cart/add_ajax/${productId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => {
+        if (response.status === 401) {
+            alert('Пожалуйста, войдите в аккаунт, чтобы добавить товар в корзину.');
+            throw new Error('Неавторизованный пользователь');
+        }
+        if (!response.ok) {
+          throw new Error('Ошибка сети');
+        }
+        return response.json();
+      })
+      .then(data => {
+        let messageDiv = document.getElementById('msg-' + productId);
+        if (!messageDiv) {
+          messageDiv = document.createElement('div');
+          messageDiv.id = 'msg-' + productId;
+          this.parentNode.appendChild(messageDiv);
+        }
+
+        if (data.success) {
+          messageDiv.textContent = 'Товар добавлен в корзину!';
+          messageDiv.style.color = 'green';
+          messageDiv.style.height = '20px';
+
+          if (data.cart_total_items !== undefined) {
+            const cartCountElem = document.getElementById('cart-count');
+            if (cartCountElem) {
+              cartCountElem.textContent = data.cart_total_items;
+            }
+          }
+        } else {
+          messageDiv.textContent = data.error || 'Ошибка при добавлении.';
+          messageDiv.style.color = 'red';
+        }
+
+        // Удаляем через 3 секунды
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 3000);
+      })
+      .catch(error => {
+        alert(error.message || 'Ошибка сети');
+      });
+    });
+  });
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+
+{% endblock %}
