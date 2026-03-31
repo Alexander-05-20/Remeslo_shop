@@ -170,4 +170,4 @@ EMAIL_HOST = '://gmail.com'                                   # SMTP серве�
 EMAIL_PORT = 587                                                # Порт TLS
 EMAIL_USE_TLS = True                                            # Включить TLS (шифрование)
 EMAIL_HOST_USER = 'craftremeslo@gmail.com'                         # Ваш email (отправитель)
-EMAIL_HOST_PASSWORD = 'srle bgmu byjg vjfe' 
+EMAIL_HOST_PASSWORD = 'fbkq dswu bkdq qeww' 
