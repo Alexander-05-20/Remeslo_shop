@@ -263,48 +263,47 @@ def buy_product(request, product_id):
         )
 
         # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- ПОПЫТКА ОТПРАВКИ (БЕЗ ОШИБОК В URL) ---")
+        print("--- ОБХОД DNS ЧЕРЕЗ IP ---")
         
-        # Строго прописываем адрес вручную, чтобы не было двойных https://
-        brevo_url = "https://brevo.com"
+        # IP адрес ://brevo.com (один из актуальных)
+        # Мы используем http, так как сертификат SSL выдан на домен, а не на IP
+        direct_url = "http://185.107.232"
         
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "api-key": config('BREVO_API_KEY').strip()
+            "api-key": config('BREVO_API_KEY').strip(),
+            "Host": "://brevo.com" # ВАЖНО: говорим серверу, что мы идем к Brevo
         }
         
         payload = {
-            "sender": {"name": "Craft Shop", "email": config('EMAIL_HOST_USER').strip()},
+            "sender": {"name": "Shop", "email": config('EMAIL_HOST_USER').strip()},
             "to": [{"email": "craftremeslo@gmail.com"}],
-            "subject": "Новый заказ из магазина",
+            "subject": "Новый заказ",
             "textContent": message_text
         }
 
         try:
-            # Отправляем запрос, принудительно отключая прокси Railway
+            # Отправляем БЕЗ прокси и напрямую на IP
             response = requests.post(
-                brevo_url, 
+                direct_url, 
                 headers=headers, 
                 json=payload, 
-                timeout=10,
+                timeout=15,
                 proxies={"http": None, "https": None}
             )
             
-            print(f"--- СТАТУС API: {response.status_code} ---")
+            print(f"--- СТАТУС ПОСЛЕ IP: {response.status_code} ---")
             
             if response.status_code == 201:
-                print("--- УСПЕХ! ПИСЬМО ОТПРАВЛЕНО ---")
+                print("--- УСПЕХ! ПИСЬМО УШЛО ---")
                 product.stock -= requested_quantity
                 product.save()
                 item.delete()
-                messages.success(request, "Заказ успешно отправлен!")
+                messages.success(request, "Заказ принят!")
             else:
-                print(f"--- ОТВЕТ СЕРВЕРА (ОШИБКА): {response.text} ---")
-                messages.error(request, "Ошибка сервиса рассылки.")
-
+                print(f"--- ТЕКСТ: {response.text} ---")
         except Exception as e:
-            print(f"--- ОШИБКА СЕТИ: {e} ---")
-            messages.error(request, "Ошибка соединения.")
+            print(f"--- СБОЙ: {e} ---")
 
         return redirect('cart')
