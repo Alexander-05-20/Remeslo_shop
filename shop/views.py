@@ -291,7 +291,22 @@ def create_order(request):
     cart_items.delete()
     return redirect('order_detail', order_id=order.id)
 
-@login_required
-def user_orders(request):
-    orders = Order.objects.filter(user=request.user).prefetch_related('items__product')
-    return render(request, 'shop/user_orders.html', {'orders': orders})
+def register(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Сохраняем номер телефона
+            profile = user.profile
+            profile.phone_number = form.cleaned_data['phone_number']
+            profile.save()
+            # Можно отправить письмо подтверждения или войти пользователя
+            return redirect('login')
+    else:
+        form = SignUpForm()
+    return render(request, 'your_template.html', {'form': form})
+
+# @login_required
+# def user_orders(request):
+#     orders = Order.objects.filter(user=request.user).prefetch_related('items__product')
+#     return render(request, 'shop/user_orders.html', {'orders': orders})
