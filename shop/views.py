@@ -226,10 +226,11 @@ def product_detail(request, pk):
 @login_required
 def buy_product(request, product_id):
     if request.method == 'POST':
-        # 1. Используем транзакцию, чтобы если почта упадет или БД глюкнет, 
-        # данные склада и корзины не изменились частично.
+        # Атомарная транзакция — все или ничего
         with transaction.atomic():
+            # Блокируем товар для обновления
             product = get_object_or_404(Product.objects.select_for_update(), id=product_id)
+            # Блокируем элемент корзины
             item = CartItem.objects.filter(user=request.user, product=product).select_for_update().first()
 
             if not item:
@@ -241,19 +242,17 @@ def buy_product(request, product_id):
             except (ValueError, TypeError):
                 requested_quantity = item.quantity
 
-            # Ограничиваем запрос тем, что реально есть в корзине
+            # Ограничиваем количеством в корзине
             requested_quantity = min(requested_quantity, item.quantity)
 
-            # 2. ПРОВЕРКА СКЛАДА
+            # На складе достаточно товара?
             if product.stock < requested_quantity:
                 messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
                 return redirect('cart')
 
-            # Получаем телефон
+            # Формируем письмо
             phone_number = getattr(getattr(request.user, 'profile', None), 'phone_number', 'Не указан')
-
-            # Формируем текст письма
-            message = (
+            email_message = (
                 f"Новый заказ!\n\n"
                 f"Клиент: {request.user.username} ({request.user.email})\n"
                 f"Телефон: {phone_number}\n"
@@ -263,19 +262,20 @@ def buy_product(request, product_id):
             )
 
             try:
-                # 3. ОТПРАВКА ПОЧТЫ
+                # Отправляем уведомление на почту продавцу
                 send_mail(
                     f'Заказ №... от {request.user.username}',
-                    message,
-                    settings.DEFAULT_FROM_EMAIL, # Настройке в settings.py
+                    email_message,
+                    settings.DEFAULT_FROM_EMAIL,
                     ['craftremeslo@gmail.com'],
                     fail_silently=False,
                 )
-                
-                # 4. ОБНОВЛЕНИЕ СКЛАДА И КОРЗИНЫ (только после успешной почты или внутри блока)
+
+                # Списываем товар со склада
                 product.stock -= requested_quantity
                 product.save()
 
+                # Уменьшаем количество/удаляем из корзины
                 if item.quantity > requested_quantity:
                     item.quantity -= requested_quantity
                     item.save()
@@ -285,7 +285,6 @@ def buy_product(request, product_id):
                 messages.success(request, "Заказ успешно оформлен! Проверьте почту.")
                 
             except Exception as e:
-                # Если почта не ушла, транзакция откатит изменения склада (благодаря transaction.atomic)
                 messages.error(request, "Ошибка отправки уведомления. Попробуйте позже.")
                 print(f"Mail error: {e}") 
 
