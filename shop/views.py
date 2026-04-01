@@ -17,6 +17,7 @@ from django.core.mail import send_mail
 import socket
 import requests
 from decouple import config
+from django.db import transaction
 
 
 # Загружает все товары (Product.objects.all()) и показывает их на главной странице.
@@ -225,79 +226,67 @@ def product_detail(request, pk):
 @login_required
 def buy_product(request, product_id):
     if request.method == 'POST':
-        print("!!! ВЫЗОВ ФУНКЦИИ BUY_PRODUCT ПРОИЗОШЕЛ !!!")
-        user = request.user
-        product = get_object_or_404(Product, id=product_id)
-        
-        try:
-            requested_quantity = int(request.POST.get('quantity', 1))
-        except (ValueError, TypeError):
-            requested_quantity = 1
-        
-        item = CartItem.objects.filter(user=user, product=product).first()
-        if not item:
-            return redirect('cart')
-        
-        current_quantity = item.quantity
-        if requested_quantity > current_quantity:
-            requested_quantity = current_quantity
+        # 1. Используем транзакцию, чтобы если почта упадет или БД глюкнет, 
+        # данные склада и корзины не изменились частично.
+        with transaction.atomic():
+            product = get_object_or_404(Product.objects.select_for_update(), id=product_id)
+            item = CartItem.objects.filter(user=request.user, product=product).select_for_update().first()
 
-        if product.stock < requested_quantity:
-            messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
-            return redirect('cart')
+            if not item:
+                messages.error(request, "Товар не найден в вашей корзине.")
+                return redirect('cart')
 
-        phone_number = request.POST.get('phone', 'Не указан') 
-        try:
-            phone_number = user.profile.phone_number
-        except:
-            pass
+            try:
+                requested_quantity = int(request.POST.get('quantity', item.quantity))
+            except (ValueError, TypeError):
+                requested_quantity = item.quantity
 
-        # Формируем текст письма
-        message_text = (
-            f"Заказ от: {user.username}\n"
-            f"Email клиента: {user.email}\n"
-            f"Номер телефона: {phone_number}\n"
-            f"Товар: {product.name}\n"
-            f"Количество: {requested_quantity}\n"
-            f"Сумма: {product.price * requested_quantity} ₽"
-        )
+            # Ограничиваем запрос тем, что реально есть в корзине
+            requested_quantity = min(requested_quantity, item.quantity)
 
-        # --- ОТПРАВКА ЧЕРЕЗ BREVO API (ВМЕСТО SMTP) ---
-        print("--- ОТПРАВКА ЧЕРЕЗ АЛЬТЕРНАТИВНЫЙ API ---")
-        
-        try:
-            # Используем альтернативный домен, который не конфликтует с Vercel
-            response = requests.post(
-                "https://sendinblue.com", 
-                headers={
-                    "accept": "application/json",
-                    "content-type": "application/json",
-                    "api-key": config('BREVO_API_KEY').strip()
-                },
-                json={
-                    "sender": {"name": "Craft Shop", "email": config('EMAIL_HOST_USER').strip()},
-                    "to": [{"email": "craftremeslo@gmail.com"}],
-                    "subject": "Новый заказ",
-                    "textContent": message_text
-                },
-                timeout=15,
-                # Принудительно отключаем прокси Railway
-                proxies={"http": None, "https": None}
+            # 2. ПРОВЕРКА СКЛАДА
+            if product.stock < requested_quantity:
+                messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
+                return redirect('cart')
+
+            # Получаем телефон
+            phone_number = getattr(getattr(request.user, 'profile', None), 'phone_number', 'Не указан')
+
+            # Формируем текст письма
+            message = (
+                f"Новый заказ!\n\n"
+                f"Клиент: {request.user.username} ({request.user.email})\n"
+                f"Телефон: {phone_number}\n"
+                f"Товар: {product.name}\n"
+                f"Количество: {requested_quantity}\n"
+                f"Итого: {product.price * requested_quantity} ₽"
             )
-            
-            print(f"--- СТАТУС API: {response.status_code} ---")
-            
-            if response.status_code == 201:
-                print("--- УСПЕХ! ПИСЬМО УШЛО ЧЕРЕЗ SENDINBLUE ---")
+
+            try:
+                # 3. ОТПРАВКА ПОЧТЫ
+                send_mail(
+                    f'Заказ №... от {request.user.username}',
+                    message,
+                    settings.DEFAULT_FROM_EMAIL, # Настройке в settings.py
+                    ['craftremeslo@gmail.com'],
+                    fail_silently=False,
+                )
+                
+                # 4. ОБНОВЛЕНИЕ СКЛАДА И КОРЗИНЫ (только после успешной почты или внутри блока)
                 product.stock -= requested_quantity
                 product.save()
-                item.delete()
-                messages.success(request, "Заказ успешно отправлен!")
-            else:
-                print(f"--- ОТВЕТ СЕРВЕРА (ОШИБКА): {response.text} ---")
-                messages.error(request, "Ошибка сервиса.")
 
-        except Exception as e:
-            print(f"--- КРИТИЧЕСКАЯ ОШИБКА: {e} ---")
-            messages.error(request, "Ошибка соединения.")
+                if item.quantity > requested_quantity:
+                    item.quantity -= requested_quantity
+                    item.save()
+                else:
+                    item.delete()
+
+                messages.success(request, "Заказ успешно оформлен! Проверьте почту.")
+                
+            except Exception as e:
+                # Если почта не ушла, транзакция откатит изменения склада (благодаря transaction.atomic)
+                messages.error(request, "Ошибка отправки уведомления. Попробуйте позже.")
+                print(f"Mail error: {e}") 
+
         return redirect('cart')
