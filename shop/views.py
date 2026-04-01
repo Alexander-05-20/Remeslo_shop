@@ -128,7 +128,12 @@ def add_to_cart(request, product_id):
         messages.success(request, f"Добавлено {quantity} шт. '{product.name}' в корзину.")
     except ValueError:
         messages.error(request, "Недостаточно товара на складе.")
-    return redirect('cart') 
+    # Возвращение на ту же страницу
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    else:
+        return redirect('cart')
 
 
 
