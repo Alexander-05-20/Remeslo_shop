@@ -56,9 +56,9 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
     
-class AboutPageMedia(models.Model):
-    image = models.ImageField(upload_to='about/media/')
-    caption = models.CharField(max_length=255, blank=True)  # необязательно
+# class AboutPageMedia(models.Model):
+#     image = models.ImageField(upload_to='about/media/')
+#     caption = models.CharField(max_length=255, blank=True)  # необязательно
 
-    def __str__(self):
-        return self.caption or f'Изображение {self.id}'
+#     def __str__(self):
+#         return self.caption or f'Изображение {self.id}'

@@ -19,8 +19,8 @@ db.sqlite3
 *.pem
 
 # Статика и медиа
-staticfiles/
-media/
+# staticfiles/
+# media/
 
 # IDE
 .vscode/

@@ -17,4 +17,5 @@ urlpatterns = [
     path('login/', views.login_view, name='login'), # Страница входа в аккаунт
     path('buy/<int:product_id>/', views.buy_product, name='buy_product'),
 
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+# + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
