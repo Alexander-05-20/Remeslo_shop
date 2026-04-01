@@ -51,9 +51,9 @@ def home(request):
 def about(request):
     return render(request, 'shop/about.html')
 
-# def about_view(request):
-#     images = AboutPage.objects.all()
-#     return render(request, 'shop/about.html', {'images': images})
+def about_view(request):
+    images = AboutPageMedia.objects.all()
+    return render(request, 'shop/about.html', {'images': images})
 
 # Загружает страницу контактов.
 def contacts(request):
