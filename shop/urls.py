@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('', views.home, name='home'),  # главная - каталог товаров
@@ -15,4 +17,4 @@ urlpatterns = [
     path('login/', views.login_view, name='login'), # Страница входа в аккаунт
     path('buy/<int:product_id>/', views.buy_product, name='buy_product'),
 
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
