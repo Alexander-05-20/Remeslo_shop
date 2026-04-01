@@ -3,6 +3,9 @@
 import os
 import sys
 
+import sys
+print(">>> WSGI loaded!", file=sys.stderr)
+
 
 def main():
     """Run administrative tasks."""

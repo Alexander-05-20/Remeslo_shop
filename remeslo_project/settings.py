@@ -2,6 +2,9 @@ from pathlib import Path
 from decouple import config, Csv
 import os
 
+import sys
+print(">>> WSGI loaded!", file=sys.stderr)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,7 +86,7 @@ DATABASES = {
         'PORT': config('DATABASE_PORT', default='5432'),
         'CONN_MAX_AGE': 600,  # Кэширование соединений
         'OPTIONS': {
-            'sslmode': 'require',  # Обязательно для Railway
+            # 'sslmode': 'require',  # Обязательно для Railway
         },
     }
 }
