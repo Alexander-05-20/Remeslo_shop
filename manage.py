@@ -3,9 +3,6 @@
 import os
 import sys
 
-import sys
-print(">>> manage loaded!", file=sys.stderr)
-
 
 def main():
     """Run administrative tasks."""
