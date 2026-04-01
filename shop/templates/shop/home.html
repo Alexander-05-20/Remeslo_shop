@@ -110,7 +110,7 @@
     </div>
     {% endfor %}
   </div>
-  <div id="message-container" style="height:40px;"></div>
+  <div id="cart-message" style="text-align: center; margin-top: 1em; font-weight: bold; color: green; display: none;">Товар добавлен в корзину</div>
 
   <!-- Кнопки навигации -->
   <div class="swiper-button-next"></div>
@@ -137,43 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
     slidesPerView: 3,
     spaceBetween: 25,
   });
-});
 
-  // Функция добавления нового товара в слайдер
-  function addProductToSlider(product) {
-    const wrapper = document.querySelector('.swiper-wrapper');
-
-    const slide = document.createElement('div');
-    slide.className = 'swiper-slide';
-    slide.style.cssText = 'height: 500px; border: 1px solid #ccc; padding: 1em; border-radius: 8px; width: 250px; box-shadow: 1px 1px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between;';
-
-    // Собираем HTML для слайда
-    slide.innerHTML = `
-      <h3 style="height: 15%; font-weight: 600; color: #432f25; margin-bottom: 0.5em;">${product.name}</h3>
-      <div class="product-image" style="position: relative; display: inline-block;">
-        <a href="${product.detail_url}">
-          <img src="${product.image_url}" alt="${product.name}" class="main-img" style="width: 100%;">
-        </a>
-        ${product.hover_image_url ? `<img src="${product.hover_image_url}" alt="${product.name}" class="hover-img" style="width: 100%; position: absolute; top: 0; left: 0; opacity:0;">` : ''}
-      </div>
-      <p style="font-weight: bold; color: #432f25; margin-bottom: 1em;">${product.price} ₽</p>
-      <form action="${product.cart_url}" method="post" style="margin-top: auto;">
-        <input type="hidden" name="csrfmiddlewaretoken" value="${product.csrf_token}">
-        <button type="submit" class="add-to-cart" style="background-color: #B87333; color: white; border: none; padding: 0.5em 1em; border-radius: 4px; cursor: pointer;">
-          Добавить в корзину
-        </button>
-      </form>
-    `;
-
-    wrapper.appendChild(slide);
-    swiper.update();
-
-    // Можно добавить плавное появление (опционально)
-    // slide.style.opacity = 0;
-    // setTimeout(() => { slide.style.opacity = 1; }, 50);
-  }
-
-  // Обработка формы добавления товара через AJAX
+  // Обработка всех форм "Добавить в корзину"
   document.querySelectorAll('.add-to-cart-form').forEach(form => {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -191,43 +156,90 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          // Создаем объект товара для вставки
+          // Создаем объект товара для добавления в слайдер
           const product = {
             id: data.product.id,
             name: data.product.name,
             price: data.product.price,
             image_url: data.product.image_url,
-            hover_image_url: data.product.hover_image_url, // если есть
+            hover_image_url: data.product.hover_image_url,
             detail_url: data.product.detail_url,
             cart_url: data.product.cart_url,
             csrf_token: getCookie('csrftoken')
           };
+
           addProductToSlider(product);
+          showCartMessage(); // показываем сообщение
         } else {
           alert('Ошибка при добавлении в корзину');
         }
       })
       .catch(() => {
-        alert('Ошибка сети');
+        alert('Произошла ошибка. Попробуйте еще раз.');
       });
     });
   });
+});
 
-  // Вспомогательная функция для получения CSRF токена
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i=0; i<cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length +1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length+1));
-          break;
-        }
+// Функция для добавления товара в слайдер
+function addProductToSlider(product) {
+  const wrapper = document.querySelector('.swiper-wrapper');
+
+  const slide = document.createElement('div');
+  slide.className = 'swiper-slide';
+  slide.style.cssText = 'height: 500px; border: 1px solid #ccc; padding: 1em; border-radius: 8px; width: 250px; box-shadow: 1px 1px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between;';
+
+  // Создаем HTML для слайда
+  slide.innerHTML = `
+    <h3 style="height: 15%; font-weight: 600; color: #432f25; margin-bottom: 0.5em;">${product.name}</h3>
+    <div class="product-image" style="position: relative; display: inline-block;">
+      <a href="${product.detail_url}">
+        <img src="${product.image_url}" alt="${product.name}" class="main-img" style="width: 100%;">
+      </a>
+      ${product.hover_image_url ? `<img src="${product.hover_image_url}" alt="${product.name}" class="hover-img" style="width: 100%; position: absolute; top: 0; left: 0; opacity:0;">` : ''}
+    </div>
+    <p style="font-weight: bold; color: #432f25; margin-bottom: 1em;">${product.price} ₽</p>
+    <form action="${product.cart_url}" method="post" style="margin-top: auto;">
+      <input type="hidden" name="csrfmiddlewaretoken" value="${product.csrf_token}">
+      <button type="submit" class="add-to-cart" style="background-color: #B87333; color: white; border: none; padding: 0.5em 1em; border-radius: 4px; cursor: pointer;">
+        Добавить в корзину
+      </button>
+    </form>
+  `;
+
+  wrapper.appendChild(slide);
+  // Обновляем слайдер
+  if (typeof swiper !== 'undefined' && swiper.update) {
+    swiper.update();
+  }
+}
+
+// Вспомогательная функция для получения токена CSRF (если не есть, то добавьте свою реализацию)
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i=0; i<cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length+1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length+1));
+        break;
       }
     }
-    return cookieValue;
   }
+  return cookieValue;
+}
+
+// Функция для отображения сообщения о добавлении товара
+function showCartMessage() {
+  const messageDiv = document.getElementById('cart-message');
+  if (messageDiv) {
+    messageDiv.style.display = 'block';
+    setTimeout(() => {
+      messageDiv.style.display = 'none';
+    }, 3000);
+  }
+}
 </script>
 
 {% endblock %}
