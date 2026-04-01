@@ -96,12 +96,10 @@ def signup(request):
 # Показывает текущие товары в корзине для авторизованного пользователя.
 @login_required
 def cart(request):
-    cart_items = CartItem.objects.filter(user=request.user)
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
-    return render(request, 'shop/cart.html', {
-        'cart_items': cart_items,
-        'total_price': total_price
-    })
+    items = CartItem.objects.filter(user=request.user)
+    total = sum(item.product.price * item.quantity for item in items)
+    return render(request, 'shop/cart.html', {'items': items, 'total': total})
+
 # Альтернативный просмотр корзины, использующий сессионную корзину (неавторизованный пользователь).
 def cart_view(request):
     cart = request.session.get('cart', {})
