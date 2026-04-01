@@ -51,6 +51,15 @@ def home(request):
 def about(request):
     return render(request, 'shop/about.html')
 
+def about_view(request):
+    images = [
+        'work_process.jpg', 
+        'work_process_2.jpg', 
+        'work_process_3.jpg', 
+        'work_process_4.jpg'
+    ]
+    return render(request, 'shop/about.html', {'images': images})
+
 # Загружает страницу контактов.
 def contacts(request):
     return render(request, 'shop/contacts.html')

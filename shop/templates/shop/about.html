@@ -18,12 +18,9 @@
 
 <!-- Фото с процессом работы -->
 <h2 style="margin:10px 0px 20px 0px">Процесс изготовления</h2>
-<div style="display: flex; flex-wrap: wrap; gap: 30px;">
-  <img src="/media/work_process.jpg" alt="Процесс 1" style="width: 200px; height:300px; border-radius: 8px;">
-  <img src="/media/work_process_2.jpg" alt="Процесс 2" style="width: 200px; height:300px; border-radius: 8px;">
-  <img src="/media/work_process_3.jpg" alt="Процесс 3" style="width: 200px; height:300px; border-radius: 8px;">
-  <img src="/media/work_process_3.jpg" alt="Процесс 4" style="width: 200px; height:300px; border-radius: 8px;">
-</div>
+{% for img in images %}
+  <img src="/media/{{ img }}" alt="Процесс" style="width:200px; border-radius:8px; margin:10px;">
+{% endfor %}
 
 <!-- Видео с процессом -->
 <h2 style="margin:20px 0px 20px 0px">Видео процесса</h2>
