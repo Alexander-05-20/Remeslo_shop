@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Sum
 import json
+from django.urls import reverse
 from functools import wraps
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
@@ -119,21 +120,36 @@ def cart_view(request):
 @login_required
 @require_POST
 def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    try:
-        quantity = int(request.POST.get('quantity', 1))
-        if quantity < 1:
-            quantity = 1
-        add_product_to_cart(request.user, product, quantity)
-        messages.success(request, f"Добавлено {quantity} шт. '{product.name}' в корзину.")
-    except ValueError:
-        messages.error(request, "Недостаточно товара на складе.")
-    # Возвращение на ту же страницу
-    referer = request.META.get('HTTP_REFERER')
-    if referer:
-        return redirect(referer)
+    # Получаем товар или возвращаем 404
+    product = get_object_or_404(Product, pk=product_id)
+
+    # Логика добавления товара в корзину
+    # Например, если у вас есть модель корзины или сессии:
+    # cart = get_or_create_cart_for_user(request.user)
+    # cart.add(product)
+
+    # Тут — пример добавления в сессию (если у вас так реализовано)
+    cart = request.session.get('cart', {})
+    if str(product_id) in cart:
+        cart[str(product_id)] += 1
     else:
-        return redirect('cart')
+        cart[str(product_id)] = 1
+    request.session['cart'] = cart
+
+    # Подготовка данных для ответа
+    response_data = {
+        'success': True,
+        'product': {
+            'id': product.id,
+            'name': product.name,
+            'price': str(product.price),  # преобразуйте в строку, если нужно
+            'image_url': product.images.first().image.url if product.images.exists() else '',
+            'hover_image_url': '',  # добавьте, если есть
+            'detail_url': reverse('product_detail', args=[product.id]),
+            'cart_url': reverse('add_to_cart', args=[product.id]),
+        }
+    }
+    return JsonResponse(response_data)
 
 
 
