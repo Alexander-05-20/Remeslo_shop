@@ -18,7 +18,7 @@ import socket
 import requests
 from decouple import config
 from django.db import transaction
-from .models import Order, OrderItem 
+from .models import Order, OrderItem, AboutPageImage
 
 
 def decrease_stock(product, quantity):
@@ -52,12 +52,7 @@ def about(request):
     return render(request, 'shop/about.html')
 
 def about_view(request):
-    images = [
-        'work_process.jpg', 
-        'work_process_2.jpg', 
-        'work_process_3.jpg', 
-        'work_process_4.jpg'
-    ]
+    images = AboutPageImage.objects.all()
     return render(request, 'shop/about.html', {'images': images})
 
 # Загружает страницу контактов.

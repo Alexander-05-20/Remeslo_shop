@@ -19,7 +19,7 @@
 <!-- Фото с процессом работы -->
 <h2 style="margin:10px 0px 20px 0px">Процесс изготовления</h2>
 {% for img in images %}
-  <img src="/media/{{ img }}" alt="Процесс" style="width:200px; border-radius:8px; margin:10px;">
+  <img src="{{ img.image.url }}" alt="{{ img.caption }}" style="width:200px; margin:10px; border-radius:8px;">
 {% endfor %}
 
 <!-- Видео с процессом -->
