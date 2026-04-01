@@ -3,7 +3,7 @@ from decouple import config, Csv
 import os
 
 import sys
-print(">>> WSGI loaded!", file=sys.stderr)
+print(">>> settings loaded!", file=sys.stderr)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -4,7 +4,7 @@ import os
 import sys
 
 import sys
-print(">>> WSGI loaded!", file=sys.stderr)
+print(">>> manage loaded!", file=sys.stderr)
 
 
 def main():
