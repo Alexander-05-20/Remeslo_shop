@@ -226,66 +226,37 @@ def product_detail(request, pk):
 @login_required
 def buy_product(request, product_id):
     if request.method == 'POST':
-        # Атомарная транзакция — все или ничего
-        with transaction.atomic():
-            # Блокируем товар для обновления
-            product = get_object_or_404(Product.objects.select_for_update(), id=product_id)
-            # Блокируем элемент корзины
-            item = CartItem.objects.filter(user=request.user, product=product).select_for_update().first()
+        # Получаем корзину этой user
+        item = get_object_or_404(CartItem, user=request.user, product_id=product_id)
+        product = item.product
 
-            if not item:
-                messages.error(request, "Товар не найден в вашей корзине.")
-                return redirect('cart')
+        # Получаем запрошенное количество (по умолчанию - текущая в корзине)
+        try:
+            requested_quantity = int(request.POST.get('quantity', item.quantity))
+        except (ValueError, TypeError):
+            requested_quantity = item.quantity
 
-            try:
-                requested_quantity = int(request.POST.get('quantity', item.quantity))
-            except (ValueError, TypeError):
-                requested_quantity = item.quantity
+        # Ограничиваем, чтобы не уменьшить больше, чем есть
+        requested_quantity = min(requested_quantity, item.quantity)
 
-            # Ограничиваем количеством в корзине
-            requested_quantity = min(requested_quantity, item.quantity)
+        # Проверяем, что на складе хватает этого количества
+        if product.stock < requested_quantity:
+            messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
+            return redirect('cart')
 
-            # На складе достаточно товара?
-            if product.stock < requested_quantity:
-                messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
-                return redirect('cart')
+        # Уменьшаем количество в корзине
+        if requested_quantity >= item.quantity:
+            # Удаляем товар из корзины, если уменьшилось до нуля
+            item.delete()
+        else:
+            # Иначе уменьшаем количество
+            item.quantity -= requested_quantity
+            item.save()
 
-            # Формируем письмо
-            phone_number = getattr(getattr(request.user, 'profile', None), 'phone_number', 'Не указан')
-            email_message = (
-                f"Новый заказ!\n\n"
-                f"Клиент: {request.user.username} ({request.user.email})\n"
-                f"Телефон: {phone_number}\n"
-                f"Товар: {product.name}\n"
-                f"Количество: {requested_quantity}\n"
-                f"Итого: {product.price * requested_quantity} ₽"
-            )
+        # Уменьшаем количество на складе
+        product.stock -= requested_quantity
+        product.save()
 
-            try:
-                # Отправляем уведомление на почту продавцу
-                send_mail(
-                    f'Заказ №... от {request.user.username}',
-                    email_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    ['craftremeslo@gmail.com'],
-                    fail_silently=False,
-                )
-
-                # Списываем товар со склада
-                product.stock -= requested_quantity
-                product.save()
-
-                # Уменьшаем количество/удаляем из корзины
-                if item.quantity > requested_quantity:
-                    item.quantity -= requested_quantity
-                    item.save()
-                else:
-                    item.delete()
-
-                messages.success(request, "Заказ успешно оформлен! Проверьте почту.")
-                
-            except Exception as e:
-                messages.error(request, "Ошибка отправки уведомления. Попробуйте позже.")
-                print(f"Mail error: {e}") 
-
+        # Можно добавить сообщение
+        messages.success(request, f"Вы приобрели {requested_quantity} шт. '{product.name}'.")
         return redirect('cart')
