@@ -21,6 +21,27 @@ from django.db import transaction
 from .models import Order, OrderItem 
 
 
+def decrease_stock(product, quantity):
+    """Уменьшает запас продукта, если хватает."""
+    if product.stock < quantity:
+        raise ValueError('Недостаточно товара на складе')
+    product.stock -= quantity
+    product.save()
+
+def add_product_to_cart(user, product, quantity):
+    """Добавляет товар в корзину, уменьшая запас продукта."""
+    try:
+        decrease_stock(product, quantity)
+        cart_item, created = CartItem.objects.get_or_create(user=user, product=product)
+        if not created:
+            cart_item.quantity += quantity
+        else:
+            cart_item.quantity = quantity
+        cart_item.save()
+    except ValueError as e:
+        raise e
+
+
 # Загружает все товары (Product.objects.all()) и показывает их на главной странице.
 def home(request):
     products = Product.objects.all()
@@ -65,7 +86,6 @@ def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
             user = form.save()
             login(request, user)
             return redirect('home')
@@ -76,10 +96,12 @@ def signup(request):
 # Показывает текущие товары в корзине для авторизованного пользователя.
 @login_required
 def cart(request):
-    items = CartItem.objects.filter(user=request.user)
-    total = sum(item.product.price * item.quantity for item in items)
-    return render(request, 'shop/cart.html', {'items': items, 'total': total})
-
+    cart_items = CartItem.objects.filter(user=request.user)
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    return render(request, 'shop/cart.html', {
+        'cart_items': cart_items,
+        'total_price': total_price
+    })
 # Альтернативный просмотр корзины, использующий сессионную корзину (неавторизованный пользователь).
 def cart_view(request):
     cart = request.session.get('cart', {})
@@ -97,37 +119,18 @@ def cart_view(request):
 
 #  Добавляет выбранный товар в корзину (для авторизованных).
 @login_required
+@require_POST
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    
     try:
-        requested_quantity = int(request.POST.get('quantity', 1))
-    except (ValueError, TypeError):
-        requested_quantity = 1
-
-    # Ищем товар в корзине пользователя
-    item = CartItem.objects.filter(user=request.user, product=product).first()
-
-    if item and item.quantity >= requested_quantity:
-        # 1. УМЕНЬШАЕМ КОЛИЧЕСТВО В КОРЗИНЕ
-        if item.quantity > requested_quantity:
-            item.quantity -= requested_quantity
-            item.save()
-        else:
-            item.delete() # Если купили всё, что было в корзине — удаляем запись
-
-        # 2. УМЕНЬШАЕМ КОЛИЧЕСТВО НА СКЛАДЕ
-        # (Только если на складе физически есть товар)
-        if product.stock >= requested_quantity:
-            product.stock -= requested_quantity
-            product.save()
-            messages.success(request, f"Вы купили {requested_quantity} шт. '{product.name}'.")
-        else:
-            messages.error(request, "Ошибка: на складе недостаточно товара для списания.")
-    else:
-        messages.error(request, "В корзине нет такого количества товара.")
-
-    return redirect('cart')
+        quantity = int(request.POST.get('quantity', 1))
+        if quantity < 1:
+            quantity = 1
+        add_product_to_cart(request.user, product, quantity)
+        messages.success(request, f"Добавлено {quantity} шт. '{product.name}' в корзину.")
+    except ValueError:
+        messages.error(request, "Недостаточно товара на складе.")
+    return redirect('cart') 
 
 
 
@@ -291,20 +294,6 @@ def create_order(request):
     cart_items.delete()
     return redirect('order_detail', order_id=order.id)
 
-def register(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            # Сохраняем номер телефона
-            profile = user.profile
-            profile.phone_number = form.cleaned_data['phone_number']
-            profile.save()
-            # Можно отправить письмо подтверждения или войти пользователя
-            return redirect('login')
-    else:
-        form = SignUpForm()
-    return render(request, 'your_template.html', {'form': form})
 
 # @login_required
 # def user_orders(request):
