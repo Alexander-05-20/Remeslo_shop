@@ -52,7 +52,7 @@ def about(request):
     return render(request, 'shop/about.html')
 
 def about_view(request):
-    images = AboutPageImage.objects.all()
+    images = AboutPageMedia.objects.all()
     return render(request, 'shop/about.html', {'images': images})
 
 # Загружает страницу контактов.
