@@ -18,7 +18,7 @@ import socket
 import requests
 from decouple import config
 from django.db import transaction
-from .models import Order, OrderItem, AboutPageImage
+from .models import Order, OrderItem, AboutPageMedia
 
 
 def decrease_stock(product, quantity):
