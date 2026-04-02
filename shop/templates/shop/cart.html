@@ -4,9 +4,9 @@
 {% block content %}
 
 {% if messages %}
-    <div style="margin-top: 20px;">
+    <div id="notification-container" style="transition: opacity 1s ease; margin-top: 20px;">
         {% for message in messages %}
-            <div style="padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold;">
+            <div style="padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 {{ message }}
             </div>
         {% endfor %}
@@ -69,6 +69,18 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // --- БЛОК 1: Автоматическое скрытие уведомления (менеджер свяжется и т.д.) ---
+  const notification = document.getElementById('notification-container');
+  if (notification) {
+    setTimeout(() => {
+      notification.style.opacity = '0'; // Плавное исчезновение
+      setTimeout(() => {
+        notification.remove(); // Полное удаление через 1 сек после начала скрытия
+      }, 1000);
+    }, 5000); // 5 секунд задержки
+  }
+
+  // --- БЛОК 2: Очистка корзины (ваш текущий код) ---
   const clearBtn = document.getElementById('clear-cart-btn');
   const cartCountElem = document.getElementById('cart-count');
 
@@ -88,9 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         if (data.success) {
           if (cartCountElem) {
-            cartCountElem.textContent = data.total_items; // обновляем число товаров
+            cartCountElem.textContent = data.total_items;
           }
-          // Перезагружаем страницу, чтобы очистить таблицу
           location.reload();
         } else {
           alert(data.error || 'Ошибка при удалении');
@@ -102,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Функция для получения CSRF токена
+  // --- БЛОК 3: Функция получения куки (ваш текущий код) ---
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
