@@ -19,6 +19,7 @@ import requests
 from decouple import config
 from django.db import transaction
 from .models import AboutPageMedia # Order, OrderItem,
+import os
 
 
 def decrease_stock(product, quantity):
