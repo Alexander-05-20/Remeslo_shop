@@ -239,7 +239,7 @@ def send_telegram_notification(message):
         return
 
     # Внимательно проверьте эту строку:
-    url = f"https://telegram.org{token}/sendMessage"
+    url = f"https://telegram.org/bot{token}/sendMessage"
     
     payload = {
         "chat_id": chat_id,
