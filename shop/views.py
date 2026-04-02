@@ -233,19 +233,27 @@ def product_detail(request, pk):
 def send_telegram_notification(message):
     token = os.getenv('TELEGRAM_TOKEN')
     chat_id = os.getenv('TELEGRAM_CHAT_ID')
-    if not token or not chat_id:
-        return # Если переменные не настроены в Railway, ничего не делаем
     
+    if not token or not chat_id:
+        print("Ошибка: Переменные окружения TELEGRAM_TOKEN или TELEGRAM_CHAT_ID не настроены в Railway")
+        return
+
+    # Внимательно проверьте эту строку:
     url = f"https://telegram.org{token}/sendMessage"
+    
     payload = {
         "chat_id": chat_id,
         "text": message,
         "parse_mode": "HTML"
     }
+    
     try:
-        requests.post(url, data=payload, timeout=5)
+        response = requests.post(url, data=payload, timeout=10)
+        # Если Telegram вернет ошибку, мы увидим её в логах Railway
+        if response.status_code != 200:
+            print(f"Ошибка API Telegram: {response.text}")
     except Exception as e:
-        print(f"Ошибка Telegram: {e}")
+        print(f"Ошибка запроса: {e}")
 
 @login_required
 def buy_product(request, product_id):
