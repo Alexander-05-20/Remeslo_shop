@@ -18,7 +18,7 @@ import socket
 import requests
 from decouple import config
 from django.db import transaction
-from .models import Order, OrderItem, AboutPageMedia
+from .models import AboutPageMedia # Order, OrderItem,
 
 
 def decrease_stock(product, quantity):
@@ -229,72 +229,92 @@ def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
     return render(request, 'shop/product_detail.html', {'product': product})
 
+def send_telegram_notification(message):
+    token = os.getenv('TELEGRAM_TOKEN')
+    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    if not token or not chat_id:
+        return # Если переменные не настроены в Railway, ничего не делаем
+    
+    url = f"https://telegram.org{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+    try:
+        requests.post(url, data=payload, timeout=5)
+    except Exception as e:
+        print(f"Ошибка Telegram: {e}")
+
 @login_required
 def buy_product(request, product_id):
     if request.method == 'POST':
-        # Получаем корзину этой user
         item = get_object_or_404(CartItem, user=request.user, product_id=product_id)
         product = item.product
 
-        # Получаем запрошенное количество (по умолчанию - текущая в корзине)
         try:
-            requested_quantity = int(request.POST.get('quantity', item.quantity))
+            requested_quantity = int(request.POST.get('quantity', 1)) # Берем из формы
         except (ValueError, TypeError):
-            requested_quantity = item.quantity
+            requested_quantity = 1
 
-        # Ограничиваем, чтобы не уменьшить больше, чем есть
-        requested_quantity = min(requested_quantity, item.quantity)
-
-        # Проверяем, что на складе хватает этого количества
         if product.stock < requested_quantity:
             messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
             return redirect('cart')
 
-        # Уменьшаем количество в корзине
-        if requested_quantity >= item.quantity:
-            # Удаляем товар из корзины, если уменьшилось до нуля
-            item.delete()
-        else:
-            # Иначе уменьшаем количество
-            item.quantity -= requested_quantity
-            item.save()
-
-        # Уменьшаем количество на складе
+        # --- ЛОГИКА УМЕНЬШЕНИЯ (ваш код) ---
         product.stock -= requested_quantity
         product.save()
 
-        # Можно добавить сообщение
+        if requested_quantity >= item.quantity:
+            item.delete()
+        else:
+            item.quantity -= requested_quantity
+            item.save()
+
+        # --- НОВЫЙ БЛОК: УВЕДОМЛЕНИЕ ---
+        full_price = product.price * requested_quantity
+        tg_message = (
+            f"<b>✅ Новый заказ на Railway!</b>\n\n"
+            f"👤 <b>Покупатель:</b> {request.user.username}\n"
+            f"📧 <b>Email:</b> {request.user.email}\n"
+            f"📦 <b>Товар:</b> {product.name}\n"
+            f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
+            f"💰 <b>Итого:</b> {full_price} ₽"
+        )
+        send_telegram_notification(tg_message)
+        # ------------------------------
+
         messages.success(request, f"Вы приобрели {requested_quantity} шт. '{product.name}'.")
         return redirect('cart')
     
-@login_required
-def create_order(request):
-    # Здесь вы можете кастомизировать выбор товаров, например, из корзины
-    cart_items = CartItem.objects.filter(user=request.user)
+# @login_required
+# def create_order(request):
+#     # Здесь вы можете кастомизировать выбор товаров, например, из корзины
+#     cart_items = CartItem.objects.filter(user=request.user)
 
-    if not cart_items:
-        messages.error(request, "Ваша корзина пуста.")
-        return redirect('cart')
+#     if not cart_items:
+#         messages.error(request, "Ваша корзина пуста.")
+#         return redirect('cart')
     
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
+#     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
-    with transaction.atomic():
-        order = Order.objects.create(user=request.user, total_price=total_price)
-        for item in cart_items:
-            # Создайте запись о покупке
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price_at_purchase=item.product.price
-            )
-        # После создания заказа очищайте корзину или оставьте в зависимости от логики
+#     with transaction.atomic():
+#         order = Order.objects.create(user=request.user, total_price=total_price)
+#         for item in cart_items:
+#             # Создайте запись о покупке
+#             OrderItem.objects.create(
+#                 order=order,
+#                 product=item.product,
+#                 quantity=item.quantity,
+#                 price_at_purchase=item.product.price
+#             )
+#         # После создания заказа очищайте корзину или оставьте в зависимости от логики
 
-    # Можно также вывести сообщение или перенаправить на страницу с заказом
-    messages.success(request, f"Ваш заказ #{order.id} успешно оформлен!")
-    # Например, очистите корзину
-    cart_items.delete()
-    return redirect('order_detail', order_id=order.id)
+#     # Можно также вывести сообщение или перенаправить на страницу с заказом
+#     messages.success(request, f"Ваш заказ #{order.id} успешно оформлен!")
+#     # Например, очистите корзину
+#     cart_items.delete()
+#     return redirect('order_detail', order_id=order.id)
 
 
 # @login_required

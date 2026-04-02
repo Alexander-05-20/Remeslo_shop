@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, ProductImage, Order, OrderItem,AboutPageMedia
+from .models import Product, ProductImage, AboutPageMedia #,Order, OrderItem,
 
 admin.site.register(AboutPageMedia)
 
@@ -23,14 +23,14 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline]
 
 
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'created_at', 'total_price')
-    list_filter = ('created_at', 'user')
-    search_fields = ('user__username',)
+# @admin.register(Order)
+# class OrderAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'user', 'created_at', 'total_price')
+#     list_filter = ('created_at', 'user')
+#     search_fields = ('user__username',)
 
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'quantity', 'price_at_purchase')
-    list_filter = ('product',)
-    search_fields = ('product__name',)
+# @admin.register(OrderItem)
+# class OrderItemAdmin(admin.ModelAdmin):
+#     list_display = ('order', 'product', 'quantity', 'price_at_purchase')
+#     list_filter = ('product',)
+#     search_fields = ('product__name',)
