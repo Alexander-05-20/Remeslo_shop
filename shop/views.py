@@ -239,7 +239,7 @@ def send_telegram_notification(message):
         return
 
     # Внимательно проверьте эту строку:
-    url = f"https://telegram.org/bot{token}/sendMessage"
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
     
     payload = {
         "chat_id": chat_id,
@@ -248,7 +248,7 @@ def send_telegram_notification(message):
     }
     
     try:
-        response = requests.post(url, data=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=10)
         # Если Telegram вернет ошибку, мы увидим её в логах Railway
         if response.status_code != 200:
             print(f"Ошибка API Telegram: {response.text}")
