@@ -18,7 +18,7 @@ import socket
 import requests
 from decouple import config
 from django.db import transaction
-from .models import AboutPageMedia # Order, OrderItem,
+from .models import AboutPageMedia
 import os
 
 
@@ -293,40 +293,5 @@ def buy_product(request, product_id):
         send_telegram_notification(tg_message)
         # ------------------------------
 
-        messages.success(request, f"Вы приобрели {requested_quantity} шт. '{product.name}'.")
+        messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
         return redirect('cart')
-    
-# @login_required
-# def create_order(request):
-#     # Здесь вы можете кастомизировать выбор товаров, например, из корзины
-#     cart_items = CartItem.objects.filter(user=request.user)
-
-#     if not cart_items:
-#         messages.error(request, "Ваша корзина пуста.")
-#         return redirect('cart')
-    
-#     total_price = sum(item.product.price * item.quantity for item in cart_items)
-    
-#     with transaction.atomic():
-#         order = Order.objects.create(user=request.user, total_price=total_price)
-#         for item in cart_items:
-#             # Создайте запись о покупке
-#             OrderItem.objects.create(
-#                 order=order,
-#                 product=item.product,
-#                 quantity=item.quantity,
-#                 price_at_purchase=item.product.price
-#             )
-#         # После создания заказа очищайте корзину или оставьте в зависимости от логики
-
-#     # Можно также вывести сообщение или перенаправить на страницу с заказом
-#     messages.success(request, f"Ваш заказ #{order.id} успешно оформлен!")
-#     # Например, очистите корзину
-#     cart_items.delete()
-#     return redirect('order_detail', order_id=order.id)
-
-
-# @login_required
-# def user_orders(request):
-#     orders = Order.objects.filter(user=request.user).prefetch_related('items__product')
-#     return render(request, 'shop/user_orders.html', {'orders': orders})

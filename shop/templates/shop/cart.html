@@ -3,6 +3,16 @@
 {% block title %}Корзина{% endblock %}
 {% block content %}
 
+{% if messages %}
+    <div style="margin-top: 20px;">
+        {% for message in messages %}
+            <div style="padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
 <h1 style="margin-top:50px;">Ваша корзина</h1>
 
 {% if items %}
