@@ -1,7 +1,5 @@
 from django.contrib import admin
-from .models import Product, ProductImage, AboutPageMedia
-
-admin.site.register(AboutPageMedia)
+from .models import Product, ProductImage
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
