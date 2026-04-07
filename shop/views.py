@@ -18,7 +18,6 @@ import socket
 import requests
 from decouple import config
 from django.db import transaction
-from .models import AboutPageMedia
 import os
 
 
@@ -51,10 +50,6 @@ def home(request):
 # Загружает страницу «О нас».
 def about(request):
     return render(request, 'shop/about.html')
-
-def about_view(request):
-    images = AboutPageMedia.objects.all()
-    return render(request, 'shop/about.html', {'images': images})
 
 # Загружает страницу контактов.
 def contacts(request):
@@ -283,7 +278,7 @@ def buy_product(request, product_id):
         # --- НОВЫЙ БЛОК: УВЕДОМЛЕНИЕ ---
         full_price = product.price * requested_quantity
         tg_message = (
-            f"<b>✅ Новый заказ на Railway!</b>\n\n"
+            f"<b>✅ Новый заказ</b>\n\n"
             f"👤 <b>Покупатель:</b> {request.user.username}\n"
             f"📧 <b>Email:</b> {request.user.email}\n"
             f"📦 <b>Товар:</b> {product.name}\n"
