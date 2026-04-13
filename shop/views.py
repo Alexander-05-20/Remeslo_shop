@@ -3,7 +3,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, CartItem
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import render, redirect
 from .forms import SignUpForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -286,7 +285,6 @@ def buy_product(request, product_id):
             f"💰 <b>Итого:</b> {full_price} ₽"
         )
         send_telegram_notification(tg_message)
-        # ------------------------------
 
         messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
         return redirect('cart')
