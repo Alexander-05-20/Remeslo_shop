@@ -4,20 +4,20 @@ import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-38op+anok6d=x&x0y2q8h!1kjku9^kkyar(4z+55@+5i8=lz0f'
-# SECRET_KEY = config('SECRET_KEY')
+# SECRET_KEY = 'django-insecure-38op+anok6d=x&x0y2q8h!1kjku9^kkyar(4z+55@+5i8=lz0f'
+SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-# DEBUG = config('DEBUG', default = False, cast = bool)
-ALLOWED_HOSTS = []
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default = '', cast = Csv())
+# DEBUG = True
+DEBUG = config('DEBUG', default = False, cast = bool)
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default = '', cast = Csv())
 
 # Application definition
 
@@ -34,7 +34,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     # Безопасность (HTTPS, XSS защита)
     'django.middleware.security.SecurityMiddleware',
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     # Работа с сессиями
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Общие вещи (редиректы, просмотры)
@@ -73,27 +73,27 @@ WSGI_APPLICATION = 'remeslo_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DATABASE_NAME'),
-#         'USER': config('DATABASE_USER'),
-#         'PASSWORD': config('DATABASE_PASSWORD'),
-#         'HOST': config('DATABASE_HOST'),
-#         'PORT': config('DATABASE_PORT', default='5432'),
-#         'CONN_MAX_AGE': 600,  # Кэширование соединений
-#         'OPTIONS': {
-#             'sslmode': 'require',  # Обязательно для Railway
-#         },
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DATABASE_NAME'),
+        'USER': config('DATABASE_USER'),
+        'PASSWORD': config('DATABASE_PASSWORD'),
+        'HOST': config('DATABASE_HOST'),
+        'PORT': config('DATABASE_PORT', default='5432'),
+        'CONN_MAX_AGE': 600,  # Кэширование соединений
+        'OPTIONS': {
+            'sslmode': 'require',  # Обязательно для Railway
+        },
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
