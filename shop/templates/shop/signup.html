@@ -15,13 +15,22 @@
     </ul>
   {% endif %}
 
+  
   <p>
-    {{ form.username.label_tag }}<br>
-    {{ form.username }}<br>
-    {% for error in form.username.errors %}
-      <span style="color: red;">{{ error }}</span><br>
-    {% endfor %}
-  </p>
+  {{ form.first_name.label_tag }}<br>
+  {{ form.first_name }}<br>
+  {% for error in form.first_name.errors %}
+    <span style="color: red;">{{ error }}</span><br>
+  {% endfor %}
+</p>
+
+<p>
+  {{ form.last_name.label_tag }}<br>
+  {{ form.last_name }}<br>
+  {% for error in form.last_name.errors %}
+    <span style="color: red;">{{ error }}</span><br>
+  {% endfor %}
+</p>
 
   <p>
     {{ form.email.label_tag }}<br>
