@@ -29,7 +29,6 @@
         <td>{{ item.product.name }}</td>
         <td><strong>{{ item.quantity }}</strong></td> 
         <td style="color: blue;">{{ item.product.stock }}</td>
-        <td>{{ item.product.price }} ₽</td>
         <td>{{ item.product.price|mul:item.quantity }} ₽</td>
         <td>
     <!-- Контейнер для выравнивания по горизонтали -->
@@ -38,7 +37,7 @@
         <form method="post" action="{% url 'buy_product' item.product.id %}" style="display:flex; align-items:center;">
             {% csrf_token %}
             <label for="quantity_{{ item.product.id }}" style="margin-right:5px;">Кол-во:</label>
-            <input type="number" id="quantity_{{ item.product.id }}" name="quantity" value="1" min="1" max="{{ item.product.stock }}" style="width:60px; margin-right:10px;">
+            <input type="number" id="quantity_{{ item.product.id }}" name="quantity" value="1" min="1" max="{{ item.product.stock }}" style="width:60px; margin-right:10px; background-color: #f2e9de;">
             <button type="submit" class="btn btn-sm btn-primary">Купить</button>
         </form>
         <!-- Форма для удаления 1 -->
@@ -52,7 +51,7 @@
     {% endfor %}
     <tr>
         <td colspan="4" align="right"><strong>Общая сумма:</strong></td>
-        <td style="text-align:center;"><strong>{{ total }} ₽</strong></td>
+        <td><strong>{{ total }} ₽</strong></td>
     </tr>
 </table>
 

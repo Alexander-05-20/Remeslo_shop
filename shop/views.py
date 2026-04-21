@@ -232,7 +232,6 @@ def send_telegram_notification(message):
         print("Ошибка: Переменные окружения TELEGRAM_TOKEN или TELEGRAM_CHAT_ID не настроены в Railway")
         return
 
-    # Внимательно проверьте эту строку:
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     
     payload = {
@@ -264,7 +263,7 @@ def buy_product(request, product_id):
             messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
             return redirect('cart')
 
-        # --- ЛОГИКА УМЕНЬШЕНИЯ (ваш код) ---
+        # ЛОГИКА УМЕНЬШЕНИЯ
         product.stock -= requested_quantity
         product.save()
 
@@ -274,7 +273,7 @@ def buy_product(request, product_id):
             item.quantity -= requested_quantity
             item.save()
 
-        # --- НОВЫЙ БЛОК: УВЕДОМЛЕНИЕ ---
+        # НОВЫЙ БЛОК: УВЕДОМЛЕНИЕ 
         full_price = product.price * requested_quantity
         tg_message = (
             f"<b>✅ Новый заказ</b>\n\n"
@@ -282,6 +281,7 @@ def buy_product(request, product_id):
             f"📧 <b>Email:</b> {request.user.email}\n"
             f"📦 <b>Товар:</b> {product.name}\n"
             f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
+            f"🔢 <b>Остаток на складе:</b> {product.stock} шт.\n"
             f"💰 <b>Итого:</b> {full_price} ₽"
         )
         send_telegram_notification(tg_message)
