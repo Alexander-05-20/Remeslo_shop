@@ -18,6 +18,7 @@ import requests
 from decouple import config
 from django.db import transaction
 import os
+from django.views.decorators.csrf import csrf_exempt
 
 
 def decrease_stock(product, quantity):
@@ -151,6 +152,30 @@ def clear_cart(request):
     
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
 
+@csrf_exempt
+@login_required
+def buy_all(request):
+    if request.method == 'POST':
+        try:
+            cart_items = CartItem.objects.filter(user=request.user).select_related('product')
+            for item in cart_items:
+                product = item.product
+                if product.stock >= item.quantity:
+                    # Вычитаем из склада
+                    product.stock -= item.quantity
+                    product.save()
+
+                    # Отправляем сообщение или сохраняем заказ (предположим, тут просто удаляем)
+                    item.delete()
+
+                    # Можно добавить логирование или отправку уведомлений
+                else:
+                    return JsonResponse({'success': False, 'error': f'Недостаточно товара {product.name} на складе'})
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 # Декоратор, проверяющий вход для AJAX-запросов.
 # Если пользователь не залогинен — возвращает ошибку через JSON.
