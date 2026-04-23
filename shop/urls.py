@@ -16,7 +16,6 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'), # Страница регистрации нового пользователя
     path('login/', views.login_view, name='login'), # Страница входа в аккаунт
     path('buy/<int:product_id>/', views.buy_product, name='buy_product'),
-    path('buy-all/', views.buy_all, name='buy-all'),
 
 ]
 # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

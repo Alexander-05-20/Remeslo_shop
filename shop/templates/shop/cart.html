@@ -62,7 +62,6 @@
 
 
 <button id="clear-cart-btn" style="margin-top:20px; padding:10px 20px;">Очистить корзину</button>
-<button id="buy-all-btn" style="margin-left: 10px; padding:10px 20px;">Купить все</button>
 <div style="margin-top:20px;"><span id="cart-count">{{ cart_item_count }}</span></div>
 {% else %}
 <p>Ваша корзина пуста.</p>
@@ -72,18 +71,18 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // --- БЛОК 1: Автоматическое скрытие уведомления ---
+  // --- БЛОК 1: Автоматическое скрытие уведомления (менеджер свяжется и т.д.) ---
   const notification = document.getElementById('notification-container');
   if (notification) {
     setTimeout(() => {
-      notification.style.opacity = '0';
+      notification.style.opacity = '0'; // Плавное исчезновение
       setTimeout(() => {
-        notification.remove();
+        notification.remove(); // Полное удаление через 1 сек после начала скрытия
       }, 1000);
-    }, 5000);
+    }, 5000); // 5 секунд задержки
   }
 
-  // --- БЛОК 2: Очистка корзины ---
+  // --- БЛОК 2: Очистка корзины (ваш текущий код) ---
   const clearBtn = document.getElementById('clear-cart-btn');
   const cartCountElem = document.getElementById('cart-count');
 
@@ -116,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // --- БЛОК 3: Функция получения куки ---
+  // --- БЛОК 3: Функция получения куки (ваш текущий код) ---
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -130,36 +129,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     return cookieValue;
-  }
-
-  // --- Обработка кнопки "Купить все" ---
-  const buyAllBtn = document.getElementById('buy-all-btn');
-
-  if (buyAllBtn) {
-    buyAllBtn.addEventListener('click', () => {
-      fetch('/cart/buy_all/', {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Ошибка сети');
-        return response.json();
-      })
-      .then(data => {
-        if (data.success) {
-          alert('Все товары успешно куплены!');
-          location.reload();
-        } else {
-          alert(data.error || 'Ошибка при покупке');
-        }
-      })
-      .catch(error => {
-        alert('Ошибка: ' + error.message);
-      });
-    });
   }
 });
 </script>
