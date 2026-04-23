@@ -23,12 +23,14 @@
         <th>Остаток в магазине</th>
         <th>Итого</th>
         <th style="text-align:center;">Действия</th>
+        <th></th>
     </tr>
     {% for item in items %}
     <tr>
         <td>{{ item.product.name }}</td>
         <td><strong>{{ item.quantity }}</strong></td> 
         <td style="color: blue;">{{ item.product.stock }}</td>
+        <td>{{ item.product.price }} ₽</td>
         <td>{{ item.product.price|mul:item.quantity }} ₽</td>
         <td>
     <!-- Контейнер для выравнивания по горизонтали -->
