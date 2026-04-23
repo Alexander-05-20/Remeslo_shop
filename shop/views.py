@@ -199,9 +199,6 @@ def remove_one_from_cart(request, product_id):
             item.save()
         else:
             item.delete()
-
-        # ВОЗВРАЩАЕМ 1 ШТУКУ НА СКЛАД
-      
     return redirect('cart')
 
 # Показывает список доступных товаров, где available=True.
@@ -277,9 +274,10 @@ def buy_product(request, product_id):
             f"<b>✅ Новый заказ</b>\n\n"
             f"👤 <b>Покупатель:</b> {request.user.username}\n"
             f"📧 <b>Email:</b> {request.user.email}\n"
+            f"📱 <b>Номер телефона:</b> {request.user.phone_number}\n"
             f"📦 <b>Товар:</b> {product.name}\n"
             f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
-            f"🔢 <b>Остаток на складе:</b> {product.stock} шт.\n"
+            f"📝 <b>Остаток на складе:</b> {product.stock} шт.\n"
             f"💰 <b>Итого:</b> {full_price} ₽"
         )
         send_telegram_notification(tg_message)
