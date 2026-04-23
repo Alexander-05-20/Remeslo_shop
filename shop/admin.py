@@ -7,11 +7,10 @@ class ProductImageInline(admin.TabularInline):
     extra = 2
     readonly_fields = ('current_image',)
 
-    def current_image(self, obj):
-        if obj and obj.image:
-            return format_html('<img src="{}" width="100" />', obj.image.url)
-        return "Нет изображения"
-    current_image.short_description = 'Текущее изображение'
+    #   if obj and obj.image:
+     #       return format_html('<img src="{}" width="100" />', obj.image.url)
+      #  return "Нет изображения"
+   # current_image.short_description = 'Текущее изображение'
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
