@@ -203,8 +203,12 @@ def remove_one_from_cart(request, product_id):
         # ВОЗВРАЩАЕМ 1 ШТУКУ НА СКЛАД
         product.stock += 1
         product.save()
-        
-    return redirect('cart')
+
+        # Посчитаем общее число товаров в корзине
+        total_items = CartItem.objects.filter(user=request.user).aggregate(sum=Sum('quantity'))['sum'] or 0
+
+        return JsonResponse({'success': True, 'total_items': total_items})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 # Показывает список доступных товаров, где available=True.
 def product_list(request):
