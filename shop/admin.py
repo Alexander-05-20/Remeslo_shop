@@ -5,7 +5,7 @@ from .models import Product, ProductImage
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 2
-    readonly_fields = ('current_image',)
+    #readonly_fields = ('current_image',)
 
     #   if obj and obj.image:
      #       return format_html('<img src="{}" width="100" />', obj.image.url)
