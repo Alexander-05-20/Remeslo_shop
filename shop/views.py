@@ -270,13 +270,10 @@ def buy_product(request, product_id):
 
         # НОВЫЙ БЛОК: УВЕДОМЛЕНИЕ 
         full_price = product.price * requested_quantity
-        profile = Profile.objects.get(user=request.user)
-        phone_number = profile.phone_number
         tg_message = (
             f"<b>✅ Новый заказ</b>\n\n"
             f"👤 <b>Покупатель:</b> {request.user.username}\n"
             f"📧 <b>Email:</b> {request.user.email}\n"
-            f"📞 <b>Телефон:</b> {phone_number}\n"
             f"📦 <b>Товар:</b> {product.name}\n"
             f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
             f"📝 <b>Остаток на складе:</b> {product.stock} шт.\n"
