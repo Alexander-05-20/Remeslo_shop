@@ -297,6 +297,11 @@ def buy_product(request, product_id):
 def buy_all_in_cart(request):
     user = request.user
     cart_items = CartItem.objects.filter(user=user)
+     
+    try:
+        requested_quantity = int(request.POST.get('quantity', 1)) # Берем из формы
+    except (ValueError, TypeError):
+        requested_quantity = 1
 
     if not cart_items.exists():
         return JsonResponse({'success': False, 'error': 'Корзина пуста'})
@@ -316,17 +321,19 @@ def buy_all_in_cart(request):
         product.save()
 
         # Формируем сообщение
-        messages_text += (
-            f"👤 Покупатель: {user.username}\n"
-            f"📧 Email: {user.email}\n"
-            f"🛍 Товар: {product.name}\n"
-            f"Количество: {quantity}\n\n"
-        )
+        full_price = product.price * requested_quantity
+        messages.success(request, f"Покупатель: {request.user.username}\n"
+                          f"Email: {request.user.email}\n"
+                          f"Товар: {product.name}\n"
+                          f"Количество: {requested_quantity}\n"
+                          f"Остаток на складе: {product.stock}\n"
+                          f"Общая сумма: {full_price} ₽")
 
     # Удаляем товары из корзины
     cart_items.delete()
 
     # Отправляем уведомление телеграм
     send_telegram_notification(messages_text)
+    messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
 
     return JsonResponse({'success': True, 'total_items': 0})
