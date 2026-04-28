@@ -258,9 +258,9 @@ def buy_product(request, product_id):
         phone_number = request.POST.get('phone_number', '').strip()
 
         # Проверяем, что номер есть
-        if not phone_number:
-            messages.error(request, "Пожалуйста, укажите номер телефона.")
-            return redirect('cart')
+        # if not phone_number:
+        #     messages.error(request, "Пожалуйста, укажите номер телефона.")
+        #     return redirect('cart')
 
         # Проверка остатков
         if product.stock < requested_quantity:
