@@ -309,17 +309,24 @@ def buy_all_in_cart(request):
     if not cart_items.exists():
         return JsonResponse({'success': False, 'error': 'Корзина пуста'})
 
-    messages_text = ""  # чтобы сформировать сообщение для телеграма
+    messages_text = ""  # Формируем сообщение для Телеграма
+
+    # Получаем номер телефона из POST-запроса
+    phone_number = request.POST.get('phone_number', '').strip()
+
+    # Проверяем, что номер есть
+    if not phone_number:
+        return JsonResponse({'success': False, 'error': 'Пожалуйста, укажите номер телефона'})
 
     for item in cart_items:
         product = item.product
         quantity = item.quantity
 
-        # Проверка оставшегося количества на складе
+        # Проверка остатков
         if product.stock < quantity:
             return JsonResponse({'success': False, 'error': f'Недостаточно товара в {product.name}'})
 
-        # Обновляем склад
+        # Обновляем остатки
         product.stock -= quantity
         product.save()
 
@@ -327,7 +334,7 @@ def buy_all_in_cart(request):
         messages_text += (
             f"👤 Покупатель: {user.username}\n"
             f"📧 Email: {user.email}\n"
-            f"📱 Телефон: {request.POST.get('phone_number')}\n"
+            f"📱 Телефон: {phone_number}\n"  # добавляем номер телефона
             f"🛍 Товар: {product.name}\n"
             f"Количество: {quantity}\n\n"
         )
@@ -337,5 +344,6 @@ def buy_all_in_cart(request):
 
     # Отправляем уведомление телеграм
     send_telegram_notification(messages_text)
+    messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
 
     return JsonResponse({'success': True, 'total_items': 0})
