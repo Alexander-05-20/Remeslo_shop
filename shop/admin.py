@@ -10,7 +10,7 @@ class ProductImageInline(admin.TabularInline):
     #   if obj and obj.image:
      #       return format_html('<img src="{}" width="100" />', obj.image.url)
       #  return "Нет изображения"
-   # current_image.short_description = 'Текущее изображение'
+   # current_image.short_description = 'Текущее изображение fghjkjhgfd'
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
