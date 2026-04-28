@@ -134,106 +134,32 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // --- БЛОК 4: Купить все товары ---
-  const buyAllBtn = document.getElementById('buy-all-btn');
+const buyAllBtn = document.getElementById('buy-all-btn');
 
-  if (buyAllBtn) {
-    buyAllBtn.addEventListener('click', () => {
-      const phoneNumber = prompt("Введите ваш номер телефона:");
-      
-      if (phoneNumber && phoneNumber.trim() !== "") {
-        fetch('/cart/buy_all/', {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({phone_number: phoneNumber})
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert("Все товары успешно куплены!");
-            location.reload();
-          } else {
-            alert("Ошибка: " + data.error);
-          }
-        })
-        .catch(error => {
-          alert("Ошибка: " + error.message);
-        });
+if (buyAllBtn) {
+  buyAllBtn.addEventListener('click', () => {
+    fetch('/cart/buy_all/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({}) // Можно оставить пустой объект или передать дополнительные данные
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert("Все товары успешно куплены!");
+        location.reload();
       } else {
-        alert("Пожалуйста, введите номер телефона");
+        alert("Ошибка: " + data.error);
       }
+    })
+    .catch(error => {
+      alert("Ошибка: " + error.message);
     });
-  }
-});
+  });
+}
 </script>
-
-
-{% comment %} 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // --- БЛОК 1: Автоматическое скрытие уведомления (менеджер свяжется и т.д.) ---
-  const notification = document.getElementById('notification-container');
-  if (notification) {
-    setTimeout(() => {
-      notification.style.opacity = '0'; // Плавное исчезновение
-      setTimeout(() => {
-        notification.remove(); // Полное удаление через 1 сек после начала скрытия
-      }, 1000);
-    }, 5000); // 5 секунд задержки
-  }
-
-  // --- БЛОК 2: Очистка корзины (ваш текущий код) ---
-  const clearBtn = document.getElementById('clear-cart-btn');
-  const cartCountElem = document.getElementById('cart-count');
-
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      fetch('/cart/clear/', {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Ошибка сети');
-        return response.json();
-      })
-      .then(data => {
-        if (data.success) {
-          if (cartCountElem) {
-            cartCountElem.textContent = data.total_items;
-          }
-          location.reload();
-        } else {
-          alert(data.error || 'Ошибка при удалении');
-        }
-      })
-      .catch(error => {
-        alert('Ошибка: ' + error.message);
-      });
-    });
-  }
-
-  // --- БЛОК 3: Функция получения куки (ваш текущий код) ---
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-});
-</script>
-{% endcomment %}
 
 {% endblock %}

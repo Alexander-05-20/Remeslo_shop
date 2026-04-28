@@ -327,7 +327,7 @@ def buy_all_in_cart(request):
         messages_text += (
             f"👤 Покупатель: {user.username}\n"
             f"📧 Email: {user.email}\n"
-            f"📱 Телефон: {request.POST.get('phone_number', 'не указан')}\n"
+            f"📱 Телефон: {request.POST.get('phone_number')}\n"
             f"🛍 Товар: {product.name}\n"
             f"Количество: {quantity}\n\n"
         )
