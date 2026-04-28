@@ -322,19 +322,18 @@ def buy_all_in_cart(request):
 
         # Формируем сообщение
         full_price = product.price * requested_quantity
-        tg_message = (
-            f"<b>✅ Новый заказ</b>\n\n"
-            f"👤 <b>Покупатель:</b> {request.user.username}\n"
-            f"📧 <b>Email:</b> {request.user.email}\n"
-            f"📦 <b>Товар:</b> {product.name}\n"
-            f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
-            f"📝 <b>Остаток на складе:</b> {product.stock} шт.\n"
-            f"💰 <b>Итого:</b> {full_price} ₽"
-        )
-        send_telegram_notification(tg_message)
+        messages.success(request, f"Покупатель: {request.user.username}\n"
+                          f"Email: {request.user.email}\n"
+                          f"Товар: {product.name}\n"
+                          f"Количество: {requested_quantity}\n"
+                          f"Остаток на складе: {product.stock}\n"
+                          f"Общая сумма: {full_price} ₽")
 
-        messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
-        return redirect('cart')
     # Удаляем товары из корзины
     cart_items.delete()
+
+    # Отправляем уведомление телеграм
+    send_telegram_notification(messages.success)
+    messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
+
     return JsonResponse({'success': True, 'total_items': 0})
