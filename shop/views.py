@@ -321,6 +321,7 @@ def buy_all_in_cart(request):
         product.save()
 
         # Формируем сообщение
+        full_price = product.price * requested_quantity
         tg_message = (
             f"<b>✅ Новый заказ</b>\n\n"
             f"👤 <b>Покупатель:</b> {request.user.username}\n"
@@ -328,9 +329,8 @@ def buy_all_in_cart(request):
             f"📦 <b>Товар:</b> {product.name}\n"
             f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
             f"📝 <b>Остаток на складе:</b> {product.stock} шт.\n"
+            f"💰 <b>Итого:</b> {full_price} ₽"
         )
-        full_price = product.price * requested_quantity
-        tg_message =(f"💰 <b>Итого:</b> {full_price} ₽")
 
     # Удаляем товары из корзины
     cart_items.delete()
