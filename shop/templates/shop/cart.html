@@ -71,95 +71,111 @@
 <a class="nav-link" href="{% url 'products' %}">Вернуться к каталогу</a>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // --- БЛОК 1: Автоматическое скрытие уведомления ---
-  const notification = document.getElementById('notification-container');
-  if (notification) {
-    setTimeout(() => {
-      notification.style.transition = 'opacity 1s';
-      notification.style.opacity = '0'; // Плавное исчезновение
+  document.addEventListener('DOMContentLoaded', function() {
+    // --- БЛОК 1: Автоматическое скрытие уведомления ---
+    const notification = document.getElementById('notification-container');
+    if (notification) {
       setTimeout(() => {
-        notification.remove(); // Полное удаление через 1 сек
-      }, 1000);
-    }, 5000); // 5 секунд задержки
-  }
+        notification.style.transition = 'opacity 1s';
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          notification.remove();
+        }, 1000);
+      }, 5000);
+    }
 
-  // --- БЛОК 2: Очистка корзины ---
-  const clearBtn = document.getElementById('clear-cart-btn');
-  const cartCountElem = document.getElementById('cart-count');
+    // --- БЛОК 2: Очистка корзины ---
+    const clearBtn = document.getElementById('clear-cart-btn');
+    const cartCountElem = document.getElementById('cart-count');
 
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      fetch('/cart/clear/', {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Ошибка сети');
-        return response.json();
-      })
-      .then(data => {
-        if (data.success) {
-          if (cartCountElem) {
-            cartCountElem.textContent = data.total_items;
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        fetch('/cart/clear/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
           }
-          location.reload();
-        } else {
-          alert(data.error || 'Ошибка при удалении');
-        }
-      })
-      .catch(error => {
-        alert('Ошибка: ' + error.message);
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('Ошибка сети');
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            if (cartCountElem) {
+              cartCountElem.textContent = data.total_items;
+            }
+            location.reload();
+          } else {
+            showMessage(data.error || 'Ошибка при удалении', true);
+          }
+        })
+        .catch(error => {
+          showMessage('Ошибка: ' + error.message, true);
+        });
       });
-    });
-  }
+    }
 
-  // --- БЛОК 3: Функция получения куки ---
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
+    // --- БЛОК 3: Функция получения куки ---
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
         }
+      }
+      return cookieValue;
+    }
+
+    // --- БЛОК 4: Купить все товары ---
+    const buyAllBtn = document.getElementById('buy-all-btn');
+
+    function showMessage(text, isError = false) {
+      const messageDiv = document.getElementById('message');
+      if (messageDiv) {
+        messageDiv.textContent = text;
+        messageDiv.style.color = isError ? 'red' : 'green';
       }
     }
-    return cookieValue;
-  }
 
-  // --- БЛОК 4: Купить все товары ---
-const buyAllBtn = document.getElementById('buy-all-btn');
+    if (buyAllBtn) {
+      console.log('Кнопка "Купить все" найдена'); // Проверка
+      buyAllBtn.addEventListener('click', () => {
+        console.log('Кнопка "Купить все" нажата'); // Проверка
+        const csrftoken = getCookie('csrftoken');
+        console.log('CSRF токен:', csrftoken); // Проверка
 
-if (buyAllBtn) {
-  buyAllBtn.addEventListener('click', () => {
-    fetch('/cart/buy_all/', {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({}) // Можно оставить пустой объект или передать дополнительные данные
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert("Все товары успешно куплены!");
-        location.reload();
-      } else {
-        alert("Ошибка: " + data.error);
-      }
-    })
-    .catch(error => {
-      alert("Ошибка: " + error.message);
-    });
+        fetch('/cart/buy_all/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}) // Можно оставить пустой объект
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showMessage("Все товары успешно куплены!");
+            location.reload();
+          } else {
+            showMessage("Ошибка: " + data.error, true);
+          }
+        })
+        .catch(error => {
+          showMessage("Ошибка: " + error.message, true);
+        });
+      });
+    } else {
+      console.log('Кнопка "Купить все" не найдена на странице');
+    }
   });
-}
 </script>
 
 {% endblock %}
