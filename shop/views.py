@@ -322,15 +322,12 @@ def buy_all_in_cart(request):
 
         # Формируем сообщение
         full_price = product.price * requested_quantity
-        tg_message = (
-            f"<b>✅ Новый заказ</b>\n\n"
-            f"👤 <b>Покупатель:</b> {request.user.username}\n"
-            f"📧 <b>Email:</b> {request.user.email}\n"
-            f"📦 <b>Товар:</b> {product.name}\n"
-            f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
-            f"📝 <b>Остаток на складе:</b> {product.stock} шт.\n"
-            f"💰 <b>Итого:</b> {full_price} ₽"
-        )
+        messages.success(request, f"Покупатель: {request.user.username}\n"
+                          f"Email: {request.user.email}\n"
+                          f"Товар: {product.name}\n"
+                          f"Количество: {requested_quantity}\n"
+                          f"Остаток на складе: {product.stock}\n"
+                          f"Общая сумма: {full_price} ₽")
 
     # Удаляем товары из корзины
     cart_items.delete()
