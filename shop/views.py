@@ -337,5 +337,4 @@ def buy_all_in_cart(request):
         return redirect('cart')
     # Удаляем товары из корзины
     cart_items.delete()
-
     return JsonResponse({'success': True, 'total_items': 0})
