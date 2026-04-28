@@ -17,12 +17,6 @@ class SignUpForm(UserCreationForm):
         required=True,
         help_text='Максимум 15 символов, без цифр.',
     )
-    first_name = forms.CharField(
-        label=_("Имя"),
-        max_length=15,
-        required=True,
-        help_text='Максимум 15 символов, без цифр.',
-    )
     last_name = forms.CharField(
         label=_("Фамилия"),
         max_length=15,
