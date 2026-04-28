@@ -304,33 +304,37 @@ def buy_product(request, product_id):
 @require_POST
 def buy_all_in_cart(request):
     user = request.user
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Некорректный формат данных.'})
+
+    phone_number = data.get('phone_number', '').strip()
+
+    if not phone_number:
+        return JsonResponse({'success': False, 'error': 'Пожалуйста, укажите номер телефона.'})
+
     cart_items = CartItem.objects.filter(user=user)
 
     if not cart_items.exists():
-        return JsonResponse({'success': False, 'error': 'Корзина пуста'})
+        return JsonResponse({'success': False, 'error': 'Корзина пуста.'})
 
-    messages_text = ""  # Формируем сообщение для Телеграма
-
-    # Получаем номер телефона из POST-запроса
-    phone_number = request.POST.get('phone_number', '').strip()
-
-    # Проверяем, что номер есть
-    if not phone_number:
-        return JsonResponse({'success': False, 'error': 'Пожалуйста, укажите номер телефона'})
+    messages_text = ""  # для формирования сообщения
 
     for item in cart_items:
         product = item.product
         quantity = item.quantity
 
-        # Проверка остатков
+        # Проверка наличия на складе
         if product.stock < quantity:
-            return JsonResponse({'success': False, 'error': f'Недостаточно товара в {product.name}'})
+            return JsonResponse({'success': False, 'error': f'Недостаточно товара в {product.name}.'})
 
-        # Обновляем остатки
+        # Обновление остатка
         product.stock -= quantity
         product.save()
 
-        # Формируем сообщение
+        # Формируем сообщение для Телеграма
         messages_text += (
             f"👤 Покупатель: {user.username}\n"
             f"📧 Email: {user.email}\n"
