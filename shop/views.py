@@ -300,57 +300,42 @@ def buy_product(request, product_id):
         return redirect('cart')
 
 
-@login_required
-@require_POST
-def buy_all_in_cart(request):
-    user = request.user
-    cart_items = CartItem.objects.filter(user=user)
-    
-    if not cart_items.exists():
-        messages.error(request, "Ваша корзина пуста")
-        return redirect('cart')
+# @login_required
+# @require_POST
+# def buy_all_in_cart(request):
+#     user = request.user
+#     cart_items = CartItem.objects.filter(user=user)
 
-    # Получаем номер телефона из POST
-    phone_number = request.POST.get('phone_number', '').strip()
+#     if not cart_items.exists():
+#         return JsonResponse({'success': False, 'error': 'Корзина пуста'})
 
-    # Проверяем, что номер есть
-    if not phone_number:
-        messages.error(request, "Пожалуйста, укажите номер телефона.")
-        return redirect('cart')
+#     messages_text = ""  # чтобы сформировать сообщение для телеграма
 
-    # Проверка остатков (как в buy_product)
-    for item in cart_items:
-        if item.product.stock < item.quantity:
-            messages.error(request, f"На складе недостаточно товара: {item.product.name}")
-            return redirect('cart')
+#     for item in cart_items:
+#         product = item.product
+#         quantity = item.quantity
 
-    # Формируем сообщение
-    tg_message = (
-        f"<b>📦 Новый заказ (Вся корзина)</b>\n\n"
-        f"<b>👤 Покупатель:</b> {user.username}\n"
-        f"<b>📧 Email:</b> {user.email}\n"
-        f"<b>📞 Телефон:</b> {phone_number}\n\n"
-        f"<b>🛒 Товары:</b>\n"
-    )
+#         # Проверка оставшегося количества на складе
+#         if product.stock < quantity:
+#             return JsonResponse({'success': False, 'error': f'Недостаточно товара в {product.name}'})
 
-    total_price = 0
-    for item in cart_items:
-        product = item.product
-        quantity = item.quantity
-        
-        # Списание со склада
-        product.stock -= quantity
-        product.save()
-        
-        item_price = product.price * quantity
-        total_price += item_price
-        tg_message += f"• {product.name} — {quantity} шт.\n"
+#         # Обновляем склад
+#         product.stock -= quantity
+#         product.save()
 
-    tg_message += f"\n<b>💰 Итого: {total_price} руб.</b>"
+#         # Формируем сообщение
+#         messages_text += (
+#             f"👤 Покупатель: {user.username}\n"
+#             f"📧 Email: {user.email}\n"
+#             f"📱 Телефон: {request.POST.get('phone_number')}\n"
+#             f"🛍 Товар: {product.name}\n"
+#             f"Количество: {quantity}\n\n"
+#         )
 
-    # Очистка корзины и уведомление
-    cart_items.delete()
-    send_telegram_notification(tg_message)
-    
-    messages.success(request, "Заказ принят! Менеджер свяжется с вами по номеру из вашего профиля.")
-    return redirect('cart')
+#     # Удаляем товары из корзины
+#     cart_items.delete()
+
+#     # Отправляем уведомление телеграм
+#     send_telegram_notification(messages_text)
+
+#     return JsonResponse({'success': True, 'total_items': 0})
