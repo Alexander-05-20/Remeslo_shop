@@ -254,26 +254,41 @@ def buy_product(request, product_id):
         except (ValueError, TypeError):
             requested_quantity = 1
 
+        # Получаем номер телефона из POST
+        phone_number = request.POST.get('phone_number', '').strip()
+
+        # Проверяем, что номер есть
+        if not phone_number:
+            messages.error(request, "Пожалуйста, укажите номер телефона.")
+            return redirect('cart')
+
+        # Проверка остатков
+        if product.stock < requested_quantity:
+            messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
+            return redirect('cart')
+        
         if product.stock < requested_quantity:
             messages.error(request, f"На складе недостаточно товара (осталось: {product.stock})")
             return redirect('cart')
 
-        # ЛОГИКА УМЕНЬШЕНИЯ
+        # Уменьшаем запас
         product.stock -= requested_quantity
         product.save()
 
+        # Обновляем корзину
         if requested_quantity >= item.quantity:
             item.delete()
         else:
             item.quantity -= requested_quantity
             item.save()
 
-        # НОВЫЙ БЛОК: УВЕДОМЛЕНИЕ 
+        # Формируем сообщение для телеграма 
         full_price = product.price * requested_quantity
         tg_message = (
             f"<b>✅ Новый заказ</b>\n\n"
             f"👤 <b>Покупатель:</b> {request.user.username}\n"
             f"📧 <b>Email:</b> {request.user.email}\n"
+            f"📱 <b>Телефон:</b> {phone_number}\n"
             f"📦 <b>Товар:</b> {product.name}\n"
             f"🔢 <b>Количество:</b> {requested_quantity} шт.\n"
             f"📝 <b>Остаток на складе:</b> {product.stock} шт.\n"
@@ -283,3 +298,44 @@ def buy_product(request, product_id):
 
         messages.success(request, "Заказ принят! В ближайшее время с вами свяжется менеджер.")
         return redirect('cart')
+
+
+@login_required
+@require_POST
+def buy_all_in_cart(request):
+    user = request.user
+    cart_items = CartItem.objects.filter(user=user)
+
+    if not cart_items.exists():
+        return JsonResponse({'success': False, 'error': 'Корзина пуста'})
+
+    messages_text = ""  # чтобы сформировать сообщение для телеграма
+
+    for item in cart_items:
+        product = item.product
+        quantity = item.quantity
+
+        # Проверка оставшегося количества на складе
+        if product.stock < quantity:
+            return JsonResponse({'success': False, 'error': f'Недостаточно товара в {product.name}'})
+
+        # Обновляем склад
+        product.stock -= quantity
+        product.save()
+
+        # Формируем сообщение
+        messages_text += (
+            f"👤 Покупатель: {user.username}\n"
+            f"📧 Email: {user.email}\n"
+            f"📱 Телефон: {request.POST.get('phone_number', 'не указан')}\n"
+            f"🛍 Товар: {product.name}\n"
+            f"Количество: {quantity}\n\n"
+        )
+
+    # Удаляем товары из корзины
+    cart_items.delete()
+
+    # Отправляем уведомление телеграм
+    send_telegram_notification(messages_text)
+
+    return JsonResponse({'success': True, 'total_items': 0})

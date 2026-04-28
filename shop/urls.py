@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.conf.urls.static import static
 from django.conf import settings
+from .views import buy_all_in_cart
 
 urlpatterns = [
     path('', views.home, name='home'),  # главная - каталог товаров
@@ -16,6 +17,7 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'), # Страница регистрации нового пользователя
     path('login/', views.login_view, name='login'), # Страница входа в аккаунт
     path('buy/<int:product_id>/', views.buy_product, name='buy_product'),
+    path('cart/buy_all/', buy_all_in_cart, name='buy_all_in_cart'),
 
 ]
 # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
