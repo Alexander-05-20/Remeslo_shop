@@ -8,6 +8,15 @@ import re
 
 class SignUpForm(UserCreationForm):
     # Новые поля:
+    username = forms.CharField(
+        label=_("Имя пользователя"), 
+        max_length=150)
+    first_name = forms.CharField(
+        label=_("Имя"),
+        max_length=15,
+        required=True,
+        help_text='Максимум 15 символов, без цифр.',
+    )
     first_name = forms.CharField(
         label=_("Имя"),
         max_length=15,
