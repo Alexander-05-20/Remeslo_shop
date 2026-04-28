@@ -14,5 +14,5 @@ def validate_surname(value):
         raise ValidationError('Фамилия должна содержать только буквы без цифр.')
 
 def validate_phone(value):
-    if not re.match(r'^\+7\d{9}$', value):
+    if not re.match(r'^\+7\d{10}$', value):
         raise ValidationError('Телефон должен начинаться с +7 и содержать максимум 12 цифр без букв.')
