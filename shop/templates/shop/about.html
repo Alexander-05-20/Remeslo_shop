@@ -2,7 +2,45 @@
 {% block title %}О нас{% endblock %}
 {% block content %}
 
-<h1 style="margin-top:50px;">О нас</h1>
+<style>
+  .namber a{
+    font-weight: 600;
+    color: inherit; /* унаследует цвет текста */
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .namber a:hover {
+  color: #B87333; /* золотистый цвет */
+  transform: scale(1.05);
+  display: inline-block;
+}
+/* Общий стиль для изображений в галерее */
+  .work-images {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .work-images img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  /* эффект при наведении для фото */
+  .work-images img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  }
+
+  /* Можно сделать адаптивную подложку для всего блока */
+  @media(max-width: 768px) {
+    /* Например, растягивать галерею на всю ширину */
+  }
+</style>
+<h1>О нас</h1>
 
 <!-- Описание -->
 <p>Мы — небольшая мастерская, которая создаёт изделия из натуральной кожи ручной работы. Натуральная кожа - прочный и долговечный материал. А изделия из натуральной кожи всегда подчеркнут Ваш статус и индивидуальность.</p>
@@ -14,22 +52,15 @@
 </ul>
 
 
-<p>Телефон: <a href="tel:+79121702087">+7 (912) 170-20-87</a>  Россия, Сыктывкар, улица Карла Маркса 119 | Ремесло</p>
+<div class="namber"><p>Телефон: <a href="tel:+79121702087">+7 (912) 170-20-87</a> </p>
+ <p>Адрес :  <a href="https://www.google.com/maps/search/?api=1&query=  г. Сыктывкар, улица Карла Маркса д.119" target="_blank" rel="noopener noreferrer" style="margin-left:10px;"> г. Сыктывкар, улица Карла Маркса д.119</a></p></div>
 
 <!-- Фото с процессом работы -->
-<h2 style="margin:10px 0px 20px 0px">Процесс изготовления</h2>
-<div style="display: flex; flex-wrap: wrap; gap: 30px;">
-  <img src="/media/work_process.jpg" alt="Процесс 1" style="width: 200px; height:300px; border-radius: 8px;">
-  <img src="/media/work_process_2.jpg" alt="Процесс 2" style="width: 200px; height:300px; border-radius: 8px;">
-  <img src="/media/work_process_3.jpg" alt="Процесс 3" style="width: 200px; height:300px; border-radius: 8px;">
-  <img src="/media/work_process_4.jpg" alt="Процесс 4" style="width: 200px; height:300px; border-radius: 8px;">
+<h2 style="margin:10px 0 20px 0;">Процесс изготовления</h2>
+<div class="work-images">
+  <img src="/media/work_process.jpg" alt="Процесс 1">
+  <img src="/media/work_process_2.jpg" alt="Процесс 2">
+  <img src="/media/work_process_3.jpg" alt="Процесс 3">
+  <img src="/media/work_process_4.jpg" alt="Процесс 4">
 </div>
-
-<!-- Видео с процессом -->
-<h2 style="margin:20px 0px 20px 0px">Видео процесса</h2>
-<video width="200" controls autoplay muted loop style="border-radius: 8px;">
-  <source src="/media/work_process_video.mp4" type="video/mp4">
-  Ваш браузер не поддерживает тег video.
-</video>
-
 {% endblock %}
