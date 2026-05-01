@@ -7,38 +7,64 @@
   h1{
     margin-top:50px;
     margin-bottom:30px;
-    }
+  }
+
+  /* Инфо о товаре */
   .product-detail {
     display: flex;
     gap: 20px;
     align-items: flex-start;
   }
 
+  /* Контейнер для изображений */
+  .product-images-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  /* Большая фотография */
+  .main-image-wrapper img {
+    max-width: 400px;
+    width: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+
+  /* Миниатюры */
+  .thumbnails {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .thumbnails img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+
+  /* Наведение */
+  .thumbnails img:hover {
+    border-color: #b87333;
+    transform: scale(1.05);
+  }
+
+  /* Основная фиксация картинок */
   .product-images {
-    flex: 1 1 50%; /* половина общей ширины */
     display: flex;
     gap: 10px;
   }
 
-  .product-images .first-image {
-    flex: 3; /* 3 части */
-    border-radius: 8px;
-    object-fit: cover;
-    max-height: 400px;
-    width: 100%;
-  }
-
-  .product-images .second-image {
-    flex: 2; /* 2 части, чуть меньше */
-    border-radius: 8px;
-    object-fit: cover;
-    max-height: 280px;
-    width: 100%;
-    align-self: flex-start;
-  }
-
+  /* Стиль для информации о товаре */
   .product-info {
-    flex: 1 1 40%; /* примерно 40% ширины */
+    flex: 1 1 40%;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -59,36 +85,36 @@
     cursor: pointer;
     max-width: 200px;
   }
-  .second-image{
-    background:#f0f0f0;
-  }
-  .first-image{
-    background:#f0f0f0;
+
+  /* Фон для изображений, если изображений нет */
+  .first-image, .second-image {
+    background: #f0f0f0;
   }
 </style>
+
 <h1>{{ product.name }}</h1>
 
 <div class="product-detail">
 
-  <div class="product-images">
-    {% with images=product.images.all|slice:":2" %}
-      {% if images|length > 0 %}
-        <img class="first-image" src="{{ images.0.image.url }}" alt="{{ product.name }}">
-        {% if images|length > 1 %}
-          <img class="second-image" src="{{ images.1.image.url }}" alt="{{ product.name }}">
-        {% else %}
-          <div class="second-image"></div>
-        {% endif %}
-      {% elif product.image %}
-        <img class="first-image" src="{{ product.image.url }}" alt="{{ product.name }}">
-        <div class="second-image"></div>
-      {% else %}
-        <div class="first-image"></div>
-        <div class="second-image"></div>
-      {% endif %}
-    {% endwith %}
+  <!-- Блок изображений -->
+  <div class="product-images-container">
+
+    <!-- Большая фотография -->
+    <div class="main-image-wrapper">
+      {% with first_image=product.images.all|first %}
+        <img id="main-image" src="{{ first_image.image.url }}" alt="{{ product.name }}">
+      {% endwith %}
+    </div>
+
+    <!-- Миниатюры -->
+    <div class="thumbnails">
+      {% for image in product.images.all %}
+        <img src="{{ image.image.url }}" alt="{{ product.name }} миниатюра" class="thumbnail" data-full="{{ image.image.url }}">
+      {% endfor %}
+    </div>
   </div>
 
+  <!-- Информация о продукте -->
   <div class="product-info">
     {% if product.description %}
       <h3>Описание</h3>
@@ -102,76 +128,88 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const buttons = document.querySelectorAll('.add-to-cart-btn');
+  document.addEventListener('DOMContentLoaded', () => {
+    // Обработка клика по миниатюрам для обмена
+    const mainImage = document.getElementById('main-image');
+    const thumbnails = document.querySelectorAll('.thumbnail');
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', function() {
-      const productId = this.getAttribute('data-product-id');
+    thumbnails.forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const tempSrc = mainImage.src;
+        const clickedSrc = thumb.getAttribute('data-full');
 
-      fetch(`/cart/add_ajax/${productId}/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({})
-      })
-      .then(response => {
-        if (response.status === 401) {
-            alert('Пожалуйста, войдите в аккаунт, чтобы добавить товар в корзину.');
-            throw new Error('Неавторизованный пользователь');
-         }
-        if (!response.ok) {
-          throw new Error('Ошибка сети');
-        }
-        return response.json();
-      })
-      .then(data => {
-        const messageDiv = document.getElementById('msg-' + productId);
-        if (data.success) {
-          messageDiv.textContent = 'Товар добавлен в корзину!';
-          messageDiv.style.color = 'green';
-
-          // Обновляем количество товаров
-          if (data.cart_total_items !== undefined) {
-              const cartCountElem = document.getElementById('cart-count');
-              if (cartCountElem) {
-                  cartCountElem.textContent = data.cart_total_items;
-              }
-          }
-
-          // Убираем сообщение через 3 секунды
-          setTimeout(() => {
-            messageDiv.textContent = '';
-          }, 3000);
-        } else {
-          messageDiv.textContent = data.error || 'Ошибка при добавлении.';
-          messageDiv.style.color = 'red';
-
-        }
-      })
-      .catch(error => {
-        alert(error.message || 'Ошибка сети');
+        // Меняем местами
+        mainImage.src = clickedSrc;
+        thumb.setAttribute('data-full', tempSrc);
       });
     });
-  });
 
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
+    // Обработка добавления в корзину
+    const buttons = document.querySelectorAll('.add-to-cart-btn');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product-id');
+
+        fetch(`/cart/add_ajax/${productId}/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({})
+        })
+        .then(response => {
+          if (response.status === 401) {
+              alert('Пожалуйста, войдите в аккаунт, чтобы добавить товар в корзину.');
+              throw new Error('Неавторизованный пользователь');
+           }
+          if (!response.ok) {
+            throw new Error('Ошибка сети');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const messageDiv = document.getElementById('msg-' + productId);
+          if (data.success) {
+            messageDiv.textContent = 'Товар добавлен в корзину!';
+            messageDiv.style.color = 'green';
+
+            if (data.cart_total_items !== undefined) {
+                const cartCountElem = document.getElementById('cart-count');
+                if (cartCountElem) {
+                    cartCountElem.textContent = data.cart_total_items;
+                }
+            }
+            setTimeout(() => {
+              messageDiv.textContent = '';
+            }, 3000);
+          } else {
+            messageDiv.textContent = data.error || 'Ошибка при добавлении.';
+            messageDiv.style.color = 'red';
+          }
+        })
+        .catch(error => {
+          alert(error.message || 'Ошибка сети');
+        });
+      });
+    });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
         }
       }
+      return cookieValue;
     }
-    return cookieValue;
-  }
-});
+  });
 </script>
 
 {% endblock %}
